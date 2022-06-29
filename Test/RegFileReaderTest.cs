@@ -1,6 +1,4 @@
-﻿using RegistryHelper.Test.Properties;
-
-namespace RegistryHelper.Test;
+﻿namespace RegistryHelper.Test;
 
 [TestClass]
 public sealed class RegFileReaderTest

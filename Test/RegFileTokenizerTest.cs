@@ -1,9 +1,4 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using RegistryHelper;
-using RegistryHelper.Test.Properties;
-
-namespace RegistryHelper.Test;
+﻿namespace RegistryHelper.Test;
 
 [TestClass]
 public sealed class RegFileTokenizerTest

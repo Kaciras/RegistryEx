@@ -1,10 +1,6 @@
-﻿using System;
-using System.IO;
-using System.Security;
+﻿using System.Security;
 using System.Security.AccessControl;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Win32;
-using RegistryHelper.Test.Properties;
 
 namespace RegistryHelper.Test;
 
