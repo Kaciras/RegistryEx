@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.AccessControl;
@@ -45,7 +46,7 @@ public static class RegHelper
 		"HKEY_USERS" or "HKU" => Registry.Users,
 		"HKEY_CURRENT_CONFIG" or "HKCC" => Registry.CurrentConfig,
 		"HKEY_PERFORMANCE_DATA" => Registry.PerformanceData,
-		"HKEY_DYN_DATA" => RegistryKey.OpenBaseKey(RegistryHive.DynData, RegistryView.Default),
+		//"HKEY_DYN_DATA" => RegistryKey.OpenBaseKey(RegistryHive.DynData, RegistryView.Default),
 		_ => null, // 微软的 API 在不存在时返回 null，这里也保持一致而不是用异常。
 	};
 
@@ -73,10 +74,45 @@ public static class RegHelper
 	/// </summary>
 	/// <param name="file">保存的文件</param>
 	/// <param name="path">注册表键</param>
-	public static void Export(string file, string path) => Utils.Execute("regedit", $"/e {file} {path}");
+	public static void Export(string file, string path) => Execute("regedit", $"/e {file} {path}");
 
 	// 必须用 regedit.exe，如果用 regedt32 可能出错，上面的一样
-	public static void Import(string file) => Utils.Execute("regedit", $"/s {file}");
+	public static void Import(string file) => Execute("regedit", $"/s {file}");
+
+	/// <summary>
+	/// 执行命令并等待完成，检查退出码，已经设置来重定向了输入和禁止显示窗口。
+	/// <br/>
+	/// 如果命令以非零值退出，则会抛出异常，异常信息使用 stderr 或 stdout，请保证命令的输出不要太长。
+	/// </summary>
+	/// <param name="file">文件名</param>
+	/// <param name="args">参数</param>
+	/// <returns>进程对象</returns>
+	/// <exception cref="SystemException">如果命令执行失败</exception>
+	static Process Execute(string file, string args = "")
+	{
+		var startInfo = new ProcessStartInfo(file)
+		{
+			Arguments = args,
+			UseShellExecute = false,
+			RedirectStandardOutput = true,
+			RedirectStandardError = true,
+			CreateNoWindow = true,
+		};
+		var process = Process.Start(startInfo);
+
+		process.WaitForExit();
+		if (process.ExitCode == 0)
+		{
+			return process;
+		}
+
+		var message = process.StandardError.ReadToEnd();
+		if (string.IsNullOrEmpty(message))
+		{
+			message = process.StandardOutput.ReadToEnd();
+		}
+		throw new SystemException($"命令执行失败 - {process.ExitCode}：{message}");
+	}
 
 	/// <summary>
 	/// 从注册表中读取指定 CLSID 项的默认值。
@@ -86,7 +122,7 @@ public static class RegHelper
 	public static string GetCLSIDValue(string clsid)
 	{
 		using var key = Registry.ClassesRoot.OpenSubKey(@"CLSID\" + clsid);
-		return (string)key?.GetValue(string.Empty)
+		return (string?)key?.GetValue(string.Empty)
 			?? throw new DirectoryNotFoundException("CLSID 记录不存在");
 	}
 
