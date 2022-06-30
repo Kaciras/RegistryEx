@@ -10,7 +10,7 @@ public sealed class RegFileReaderTest
 
 		Assert.IsTrue(reader.Read());
 		Assert.IsTrue(reader.IsKey);
-		Assert.AreEqual(@"HKEY_CURRENT_USER\_Test_Import\Key", reader.Key);
+		Assert.AreEqual(@"HKEY_CURRENT_USER\_RH_Test_\Key", reader.Key);
 	}
 
 	[TestMethod]

@@ -127,7 +127,7 @@ namespace RegistryHelper.Test.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Windows Registry Editor Version 5.00
         ///
-        ///[HKEY_CLASSES_ROOT\测试项]
+        ///[HKEY_CLASSES_ROOT\_RH_Test_]
         ///
         ///[HKEY_CLASSES_ROOT\测试项\bar]
         ///
