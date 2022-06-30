@@ -1,15 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Text;
 using Microsoft.Win32;
 
+[assembly: InternalsVisibleTo("Test")]
 namespace RegistryHelper;
 
-public static class RegHelper
+public static class RegistryHelper
 {
 	/// <summary>
 	/// 从 .NET 标准库里抄的快捷方法，增加了根键的缩写支持，为什么微软不直接提供？
@@ -17,7 +19,7 @@ public static class RegHelper
 	/// <see href="https://referencesource.microsoft.com/#mscorlib/microsoft/win32/registry.cs,94"/>
 	/// </summary>
 	/// <returns>注册表键，如果不存在则为 null</returns>
-	public static RegistryKey OpenKey(string path, bool wirte = false)
+	public static RegistryKey? OpenKey(string path, bool wirte = false)
 	{
 		var basekeyName = path;
 		var i = path.IndexOf('\\');
@@ -38,7 +40,7 @@ public static class RegHelper
 		}
 	}
 
-	static RegistryKey? GetBaseKey(string name) => name.ToUpper() switch
+	public static RegistryKey? GetBaseKey(string name) => name.ToUpper() switch
 	{
 		"HKEY_CURRENT_USER" or "HKCU" => Registry.CurrentUser,
 		"HKEY_LOCAL_MACHINE" or "HKLM" => Registry.LocalMachine,
@@ -46,7 +48,6 @@ public static class RegHelper
 		"HKEY_USERS" or "HKU" => Registry.Users,
 		"HKEY_CURRENT_CONFIG" or "HKCC" => Registry.CurrentConfig,
 		"HKEY_PERFORMANCE_DATA" => Registry.PerformanceData,
-		//"HKEY_DYN_DATA" => RegistryKey.OpenBaseKey(RegistryHive.DynData, RegistryView.Default),
 		_ => null, // 微软的 API 在不存在时返回 null，这里也保持一致而不是用异常。
 	};
 
@@ -67,6 +68,63 @@ public static class RegHelper
 		}
 		path = path.Substring(i, path.Length - i);
 		return basekey.ContainsSubKey(path);
+	}
+
+	public static bool IsTODO(string file)
+	{
+		var reader = new RegFileReader(File.ReadAllText(file, Encoding.Unicode));
+		var expected = true;
+
+		while (expected && reader.Read())
+		{
+			if (reader.IsKey)
+			{
+				var exists = KeyExists(reader.Key);
+				expected = reader.IsDelete ^ exists;
+			}
+			else if (reader.IsDelete)
+			{
+				expected = Registry.GetValue(reader.Key, reader.Name, null) == null;
+			}
+			else
+			{
+				expected = CheckValueInDB(reader.Key,
+					reader.Name, reader.Value, reader.Kind);
+			}
+		}
+
+		return !expected;
+	}
+
+	/// <summary>
+	/// 检查 Reg 文件里的一个值是否已经存在于注册表中。
+	/// </summary>
+	/// <param name="key">键路径</param>
+	/// <param name="name">值名</param>
+	/// <param name="valueStr">Reg文件里字符串形式的值</param>
+	/// <param name="kind">值类型</param>
+	static bool CheckValueInDB(string key, string name, object expected, RegistryValueKind kind)
+	{
+		using var keyObj = OpenKey(key);
+		var actual = keyObj.GetValue(name, null, RegistryValueOptions.DoNotExpandEnvironmentNames);
+
+		// Binary 和 MultiString 返回的是数组，需要用 SequenceEqual 对比。
+		bool ConvertAndCheck<T>()
+		{
+			if (actual is not T[] || actual == null)
+			{
+				return false;
+			}
+			return ((T[])expected).SequenceEqual((T[])actual);
+		}
+
+		return kind switch
+		{
+			RegistryValueKind.MultiString => ConvertAndCheck<string>(),
+			RegistryValueKind.Binary => ConvertAndCheck<byte>(),
+			RegistryValueKind.Unknown or RegistryValueKind.None => throw new Exception("Invalid kind"),
+			_ => expected.Equals(actual),
+		};
 	}
 
 	/// <summary>
@@ -111,7 +169,7 @@ public static class RegHelper
 		{
 			message = process.StandardOutput.ReadToEnd();
 		}
-		throw new SystemException($"命令执行失败 - {process.ExitCode}：{message}");
+		throw new SystemException($"Command failed({process.ExitCode})：{message}");
 	}
 
 	/// <summary>
@@ -123,29 +181,13 @@ public static class RegHelper
 	{
 		using var key = Registry.ClassesRoot.OpenSubKey(@"CLSID\" + clsid);
 		return (string?)key?.GetValue(string.Empty)
-			?? throw new DirectoryNotFoundException("CLSID 记录不存在");
+			?? throw new DirectoryNotFoundException($"CLSID {clsid} is not registred");
 	}
 
-	/// <summary>
-	/// 在指定的目录中搜索含有某个路径的项，只搜一层。
-	/// <br/>
-	/// 因为 rootKey 会销毁，必须在离开作用域前遍历完，所以返回IList。
-	/// </summary>
-	/// <param name="root">在此目录中搜索</param>
-	/// <param name="key">要搜索的键路径</param>
-	/// <returns>子项名字列表</returns>
-	public static List<string> Search(string root, string key)
+	public static void AddTokenPrivileges()
 	{
-		using var rootKey = OpenKey(root);
-		return rootKey.GetSubKeyNames()
-			.Where(name => rootKey.ContainsSubKey(Path.Combine(name, key)))
-			.ToList();
-	}
-
-	public static bool ContainsSubKey(this RegistryKey key, string name)
-	{
-		using var subKey = key.OpenSubKey(name);
-		return subKey != null;
+		TokenManipulator.AddPrivilege("SeTakeOwnershipPrivilege");
+		TokenManipulator.AddPrivilege("SeRestorePrivilege");
 	}
 
 	/// <summary>
@@ -160,74 +202,10 @@ public static class RegHelper
 	/// <param name="key">键</param>
 	/// <returns>一个可销毁对象，在销毁时还原键的权限</returns>
 	/// <see cref="https://stackoverflow.com/a/6491052"/>
-	public static RegistryElevateSession Elevate(RegistryKey baseKey, string name)
+	public static KeyElevateSession Elevate(RegistryKey baseKey, string name)
 	{
-		// 这几个权限枚举得设对，否则要么打不开要么无法改权限。
-		var key = baseKey.OpenSubKey(
-			name,
-			RegistryKeyPermissionCheck.ReadWriteSubTree,
-			RegistryRights.TakeOwnership);
-
-		if (key == null)
-		{
-			throw new DirectoryNotFoundException();
-		}
-
 		var user = WindowsIdentity.GetCurrent().User;
 		var rule = new RegistryAccessRule(user, RegistryRights.FullControl, AccessControlType.Allow);
-
-		return new RegistryElevateSession(key, rule);
-	}
-
-	public readonly struct RegistryElevateSession : IDisposable
-	{
-		readonly RegistryKey key;
-		readonly RegistryAccessRule rule;
-
-		readonly IdentityReference oldOwner;
-		readonly RegistryAccessRule oldRule;
-
-		internal RegistryElevateSession(RegistryKey key, RegistryAccessRule rule)
-		{
-			this.key = key;
-			this.rule = rule;
-
-			var security = key.GetAccessControl();
-			var identity = rule.IdentityReference;
-
-			oldOwner = security.GetOwner(typeof(SecurityIdentifier));
-			security.SetOwner(identity);
-			key.SetAccessControl(security);
-
-			oldRule = security.GetAccessRules(true, false, identity.GetType())
-				.Cast<RegistryAccessRule>()
-				.FirstOrDefault(r => r.IdentityReference.Equals(identity));
-
-			security.SetAccessRule(rule);
-			key.SetAccessControl(security);
-		}
-
-		public void Dispose()
-		{
-			// key 可能被删除了，所以重新获取一遍。
-			using var current = OpenKey(key.Name, true);
-			key.Dispose();
-
-			if (current != null)
-			{
-				var accessControl = current.GetAccessControl();
-				if (oldRule != null)
-				{
-					accessControl.SetAccessRule(oldRule);
-				}
-				else
-				{
-					accessControl.RemoveAccessRule(rule);
-				}
-
-				accessControl.SetOwner(oldOwner);
-				current.SetAccessControl(accessControl);
-			}
-		}
+		return new KeyElevateSession(baseKey, name, rule);
 	}
 }
