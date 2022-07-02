@@ -5,11 +5,12 @@
     <LangVersion>latest</LangVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Nullable>enable</Nullable>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Authors>Kaciras</Authors>
+    <RepositoryUrl>https://github.com/Kaciras/RegistryHelper</RepositoryUrl>
+    <Version>1.0.0-preview.0</Version>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="..\.editorconfig" Link=".editorconfig" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
