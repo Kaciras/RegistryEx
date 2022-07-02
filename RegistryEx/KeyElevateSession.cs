@@ -5,7 +5,7 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using Microsoft.Win32;
 
-namespace RegistryHelper;
+namespace RegistryEx;
 
 public sealed class KeyElevateSession : IDisposable
 {

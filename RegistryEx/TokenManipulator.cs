@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace RegistryHelper;
+namespace RegistryEx;
 
 /// <summary>
 /// 
-/// 
-/// <see href="https://stackoverflow.com/a/38727406/7065321"></see>
 /// <see href="https://stackoverflow.com/a/17047190/7065321"></see>
 /// </summary>
 static class TokenManipulator

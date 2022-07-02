@@ -5,7 +5,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>RegistryHelper.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+    <RootNamespace>RegistryEx.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RegistryHelper\RegistryHelper.csproj" />
+    <ProjectReference Include="..\RegistryEx\RegistryEx.csproj" />
   </ItemGroup>
 
   <ItemGroup>

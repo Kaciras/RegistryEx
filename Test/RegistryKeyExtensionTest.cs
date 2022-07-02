@@ -1,5 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-namespace RegistryHelper.Test;
+namespace RegistryEx.Test;
 
 [TestClass]
 public sealed class RegistryKeyExtensionTest

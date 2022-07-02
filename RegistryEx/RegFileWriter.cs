@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using Microsoft.Win32;
 
-namespace RegistryHelper;
+namespace RegistryEx;
 
 public class RegFileWriter : IDisposable
 {

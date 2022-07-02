@@ -9,7 +9,8 @@ using System.Text;
 using Microsoft.Win32;
 
 [assembly: InternalsVisibleTo("Test")]
-namespace RegistryHelper;
+[assembly: InternalsVisibleTo("Benchmark")]
+namespace RegistryEx;
 
 public static class RegistryHelper
 {
@@ -72,7 +73,7 @@ public static class RegistryHelper
 
 	public static bool IsTODO(string file)
 	{
-		var reader = new RegFileReader(File.ReadAllText(file, Encoding.Unicode));
+		var reader = RegFileReader.OpenFile(file);
 		var expected = true;
 
 		while (expected && reader.Read())
@@ -101,14 +102,13 @@ public static class RegistryHelper
 	/// </summary>
 	/// <param name="key">键路径</param>
 	/// <param name="name">值名</param>
-	/// <param name="valueStr">Reg文件里字符串形式的值</param>
+	/// <param name="valueStr">reg 文件里字符串形式的值</param>
 	/// <param name="kind">值类型</param>
 	static bool CheckValueInDB(string key, string name, object expected, RegistryValueKind kind)
 	{
 		using var keyObj = OpenKey(key);
 		var actual = keyObj.GetValue(name, null, RegistryValueOptions.DoNotExpandEnvironmentNames);
 
-		// Binary 和 MultiString 返回的是数组，需要用 SequenceEqual 对比。
 		bool ConvertAndCheck<T>()
 		{
 			if (actual is not T[] || actual == null)
@@ -184,10 +184,14 @@ public static class RegistryHelper
 			?? throw new DirectoryNotFoundException($"CLSID {clsid} is not registred");
 	}
 
+	/// <summary>
+	/// Add necesary token privilieges to current process for `Elevate()`
+	/// </summary>
+	/// <see href="https://stackoverflow.com/a/38727406/7065321"></see>
 	public static void AddTokenPrivileges()
 	{
-		TokenManipulator.AddPrivilege("SeTakeOwnershipPrivilege");
 		TokenManipulator.AddPrivilege("SeRestorePrivilege");
+		TokenManipulator.AddPrivilege("SeTakeOwnershipPrivilege");
 	}
 
 	/// <summary>

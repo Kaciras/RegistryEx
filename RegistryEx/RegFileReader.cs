@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Microsoft.Win32;
 
-namespace RegistryHelper;
+namespace RegistryEx;
 
 /// <summary>
 /// Reg 文件读取器，是 RegFileTokenizer 的下一层，处理上下文相关的语法。
@@ -18,13 +19,13 @@ public ref struct RegFileReader
 	/// </summary>
 	public bool IsKey { get; private set; } = default;
 
-	public string Key { get; private set; } = default;
+	public string Key { get; private set; } = string.Empty;
 
-	public string Name { get; private set; } = default;
+	public string Name { get; private set; } = string.Empty;
 
 	public RegistryValueKind Kind { get; private set; } = default;
 
-	public object Value { get; private set; } = default;
+	public object Value { get; private set; } = string.Empty;
 
 	public bool IsDelete { get; private set; } = default;
 
@@ -225,5 +226,10 @@ public ref struct RegFileReader
 			RegistryValueKind.String => text,
 			_ => throw new InvalidProgramException("不会运行到这一句"),
 		};
+	}
+
+	public static RegFileReader OpenFile(string file)
+	{
+		return new RegFileReader(File.ReadAllText(file, Encoding.Unicode));
 	}
 }

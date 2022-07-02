@@ -1,7 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
-using RegistryHelper.Benchmark.Properties;
+using RegistryEx.Benchmark.Properties;
 
-namespace RegistryHelper.Benchmark;
+namespace RegistryEx.Benchmark;
 
 public class RegFilePerf
 {

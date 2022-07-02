@@ -11,7 +11,7 @@
 
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
 
-    <RootNamespace>RegistryHelper.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+    <RootNamespace>RegistryEx.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RegistryHelper\RegistryHelper.csproj" />
+    <ProjectReference Include="..\RegistryEx\RegistryEx.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -62,6 +62,10 @@
     <None Update="Resources\ValueParts.reg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Snapshots\RegFileWriterTest\" />
   </ItemGroup>
 
 </Project>

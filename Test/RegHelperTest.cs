@@ -1,7 +1,7 @@
 ﻿using System.Security;
 using System.Security.AccessControl;
 
-namespace RegistryHelper.Test;
+namespace RegistryEx.Test;
 
 [TestClass]
 public sealed class RegHelperTest

@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace RegistryHelper.Test.Properties {
+namespace RegistryEx.Test.Properties {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace RegistryHelper.Test.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("RegistryHelper.Test.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("RegistryEx.Test.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -63,7 +63,7 @@ namespace RegistryHelper.Test.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Windows Registry Editor Version 5.00
         ///
-        ///[HKEY_CURRENT_USER\_Test_Import\Key]
+        ///[HKEY_CURRENT_USER\_RH_Test_\Key]
         ///&quot;StringValue&quot;=&quot;中文内容&quot;
         ///
         ///.
@@ -77,7 +77,7 @@ namespace RegistryHelper.Test.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Windows Registry Editor Version 5.00
         ///
-        ///[HKEY_CURRENT_USER\_Test_Kinds]
+        ///[HKEY_CURRENT_USER\_RH_Test_]
         ///&quot;Test&quot;=foobar:00000123
         ///
         ///.
@@ -93,7 +93,7 @@ namespace RegistryHelper.Test.Properties {
         ///
         ///; 每种类型的值都有一个
         ///
-        ///[HKEY_CURRENT_USER\_Test_Kinds]
+        ///[HKEY_CURRENT_USER\_RH_Test_]
         ///@=&quot;文字文字&quot;
         ///&quot;Binary&quot;=hex:fa,51,6f,89
         ///&quot;Dword&quot;=dword:00000123
@@ -129,15 +129,15 @@ namespace RegistryHelper.Test.Properties {
         ///
         ///[HKEY_CLASSES_ROOT\_RH_Test_]
         ///
-        ///[HKEY_CLASSES_ROOT\测试项\bar]
+        ///[HKEY_CLASSES_ROOT\_RH_Test_\bar]
         ///
-        ///[HKEY_CLASSES_ROOT\测试项\bar\key]
+        ///[HKEY_CLASSES_ROOT\_RH_Test_\bar\key]
         ///
-        ///[HKEY_CLASSES_ROOT\测试项\baz]
+        ///[HKEY_CLASSES_ROOT\_RH_Test_\baz]
         ///
-        ///[HKEY_CLASSES_ROOT\测试项\foo]
+        ///[HKEY_CLASSES_ROOT\_RH_Test_\foo]
         ///
-        ///[HKEY_CLASSES_ROOT\测试项\foo\key]
+        ///[HKEY_CLASSES_ROOT\_RH_Test_\foo\key]
         ///
         ///.
         /// </summary>
@@ -150,7 +150,7 @@ namespace RegistryHelper.Test.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Windows Registry Editor Version 5.00
         ///
-        ///[HKEY_CURRENT_USER\_Test_Kinds]
+        ///[HKEY_CURRENT_USER\_RH_Test_]
         ///&quot;Multi&quot;=hex(7):53,00,74,00,\
         ///  72,00,30,00,00\
         ///  
@@ -165,7 +165,7 @@ namespace RegistryHelper.Test.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Windows Registry Editor Version 5.00
         ///
-        ///[HKEY_CURRENT_USER\_Test_Kinds]
+        ///[HKEY_CURRENT_USER\_RH_Test_]
         ///&quot;Multi&quot;=hex(7):53,00,74,00,\ ;测试多行 + 注释
         ///  72,00,30,00,\
         ///  ;注释在值内占一行

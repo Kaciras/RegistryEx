@@ -2,7 +2,7 @@
 using System.IO;
 using Microsoft.Win32;
 
-namespace RegistryHelper;
+namespace RegistryEx;
 
 public static class RegistryKeyExtension
 {

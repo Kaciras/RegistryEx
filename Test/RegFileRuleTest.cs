@@ -1,4 +1,4 @@
-﻿namespace RegistryHelper.Test;
+﻿namespace RegistryEx.Test;
 
 [TestClass]
 public sealed class RegFileRuleTest

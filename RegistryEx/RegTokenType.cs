@@ -1,4 +1,4 @@
-﻿namespace RegistryHelper;
+﻿namespace RegistryEx;
 
 public enum RegTokenType : byte
 {

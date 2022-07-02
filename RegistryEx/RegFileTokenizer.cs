@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 
-namespace RegistryHelper;
+namespace RegistryEx;
 
 /// <summary>
 /// 解析注册表导出文件（.reg）的工具，属于编译器里最前端的分词器。
@@ -15,7 +15,7 @@ namespace RegistryHelper;
 /// </list>
 /// <seealso cref="https://support.microsoft.com/en-us/help/310516/how-to-add-modify-or-delete-registry-subkeys-and-values-by-using-a-reg"/>
 /// </summary>
-public ref struct RegFileTokenizer
+ref struct RegFileTokenizer
 {
 	/*
 	 * 每个标记加上换行符，用于 IndexOfAny 搜索同时检查是否有换行。
@@ -38,7 +38,7 @@ public ref struct RegFileTokenizer
 	{
 		this.content = content;
 
-		Value = null;
+		Value = string.Empty;
 		i = 0;
 		hasMoreLines = false;
 		TokenType = RegTokenType.None;
@@ -136,8 +136,6 @@ public ref struct RegFileTokenizer
 	// 旧版的 REGEDIT4 就不支持了，Win 7 以上都是 5.0 的了。
 	void ReadVersion()
 	{
-		const string VER_LINE = "Windows Registry Editor Version 5.00";
-
 		CheckHasValue();
 
 		var j = i;
@@ -150,7 +148,7 @@ public ref struct RegFileTokenizer
 		TokenType = RegTokenType.Version;
 		Value = content.Substring(j, i - j);
 
-		if (Value != VER_LINE)
+		if (Value != RegDocument.VER_LINE)
 		{
 			throw new FormatException("Invalid version: " + Value);
 		}
