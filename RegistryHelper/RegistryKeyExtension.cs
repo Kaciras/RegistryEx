@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Microsoft.Win32;
 
 namespace RegistryHelper;
@@ -71,7 +69,11 @@ public static class RegistryKeyExtension
 		T? defaultValue = default)
 	{
 		using var subKey = key.OpenSubKey(path);
-		return (T?)subKey?.GetValue(name, defaultValue);
+		if (subKey == null)
+		{
+			return defaultValue;
+		}
+		return (T?)subKey.GetValue(name, defaultValue);
 	}
 
 	public static void DeleteValue(

@@ -1,72 +1,141 @@
-﻿namespace RegistryHelper.Test;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+namespace RegistryHelper.Test;
 
 [TestClass]
 public sealed class RegistryKeyExtensionTest
 {
+	readonly RegistryKey HKCU = Registry.CurrentUser;
+
+	[TestInitialize]
+	public void Setup()
+	{
+		RegistryHelper.Import(@"Resources/Kinds.reg");
+	}
+
+	[TestCleanup]
+	public void Cleanup()
+	{
+		HKCU.DeleteSubKeyTree("_RH_Test_", false);
+	}
+
 	[TestMethod]
 	public void Exists()
 	{
-		using var key = Registry.CurrentUser.OpenSubKey("Software");
+		using var key = HKCU.OpenSubKey("_RH_Test_");
 		Assert.IsTrue(key!.Exists());
 	}
 
 	[TestMethod]
 	public void NotExists()
 	{
-		using var key = Registry.CurrentUser.CreateSubKey("_RH_Test_");
-		Registry.CurrentUser.DeleteSubKey("_RH_Test_");
+		using var key = HKCU.CreateSubKey("_RH_Test_");
+		HKCU.DeleteSubKey("_RH_Test_");
 		Assert.IsFalse(key.Exists());
 	}
 
 	[TestMethod]
 	public void Delete()
 	{
-		using var key = Registry.CurrentUser.CreateSubKey("_RH_Test_");
+		using var key = HKCU.CreateSubKey("_RH_Test_");
 		key.Delete();
-		Assert.IsNull(Registry.CurrentUser.OpenSubKey("_RH_Test_"));
+		Assert.IsNull(HKCU.OpenSubKey("_RH_Test_"));
 	}
 
 	[ExpectedException(typeof(IOException))]
 	[TestMethod]
 	public void DeleteNonExists()
 	{
-		using var key = Registry.CurrentUser.CreateSubKey("_RH_Test_");
+		using var key = HKCU.CreateSubKey("_RH_Test_");
 		key.Delete();
 		key.Delete();
 	}
 
-	[DataRow("_NON_EXISTS_", false)]
-	[DataRow("Software", true)]
+	[DataRow("_RH_Test_", true)]
+	[DataRow("__NOE__", false)]
 	[DataTestMethod]
 	public void ContainsSubKey(string keyName, bool expected)
 	{
-		Assert.AreEqual(expected, Registry.CurrentUser.ContainsSubKey(keyName));
+		Assert.AreEqual(expected, HKCU.ContainsSubKey(keyName));
 	}
 
 	[TestMethod]
 	public void GetValueKind()
 	{
-		Assert.AreEqual(RegistryValueKind.ExpandString, Registry.CurrentUser.GetValueKind("Environment", "Path"));
+		var actual = HKCU.GetValueKind("_RH_Test_", "Expand");
+		Assert.AreEqual(RegistryValueKind.ExpandString, actual);
 	}
 
 	[ExpectedException(typeof(IOException))]
 	[TestMethod]
 	public void GetValueKindNonExistKey()
 	{
-		Registry.CurrentUser.GetValueKind("_NOE_", "Path");
+		HKCU.GetValueKind("__NOE__", "Path");
 	}
 
 	[ExpectedException(typeof(IOException))]
 	[TestMethod]
 	public void GetValueKindNonExists()
 	{
-		Registry.CurrentUser.GetValueKind("Environment", "_NOE_");
+		HKCU.GetValueKind("_RH_Test_", "__NOE__");
 	}
 
 	[ExpectedException(typeof(InvalidCastException))]
 	[TestMethod]
+	public void GetValueWithInvalidType()
+	{
+		HKCU.GetValue<int>("_RH_Test_", string.Empty);
+	}
+
+	[TestMethod]
+	public void GetNonExistsValue()
+	{
+		Assert.AreEqual(0, HKCU.GetValue<int>("_RH_Test_", "__NOE__"));
+	}
+
+	[TestMethod]
+	public void GetValueFromNonExistKey()
+	{
+		Assert.AreEqual(0, HKCU.GetValue<int>("__NOE__", string.Empty));
+	}
+
+	[TestMethod]
 	public void GetValue()
 	{
-		Registry.CurrentUser.GetValue<int>("Environment", "Path");
+		Assert.AreEqual(0x123, HKCU.GetValue<int>("_RH_Test_", "Dword"));
+	}
+
+	[TestMethod]
+	public void DeleteNonExistValue()
+	{
+		HKCU.DeleteValue("_RH_Test_", "__NOE__");
+	}
+
+	[TestMethod]
+	public void DeleteValueOnNonExistKey()
+	{
+		HKCU.DeleteValue("__NOE__", "Dword");
+	}
+
+	[TestMethod]
+	public void DeleteValue()
+	{
+		HKCU.DeleteValue("_RH_Test_", "Dword");
+
+		Assert.IsNull(HKCU.GetValue("Dword"));
+		Assert.IsTrue(HKCU.ContainsSubKey("_RH_Test_"));
+	}
+
+	[TestMethod]
+	public void SetValueOnNonExistKey()
+	{
+		HKCU.SetValue(@"_RH_Test_\New", "test", 123);
+		Assert.AreEqual(123, Registry.GetValue(@"HKEY_CURRENT_USER\_RH_Test_\New", "test", null));
+	}
+
+	[TestMethod]
+	public void SetValue()
+	{
+		HKCU.SetValue(@"_RH_Test_", "Dword", 8964);
+		Assert.AreEqual(8964, Registry.GetValue(@"HKEY_CURRENT_USER\_RH_Test_", "Dword", 0));
 	}
 }
