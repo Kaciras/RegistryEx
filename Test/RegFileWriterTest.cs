@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System.Text;
 
 namespace RegistryEx.Test;
 
@@ -23,7 +17,10 @@ public class RegFileWriterTest
 		try
 		{
 			var expected = File.ReadAllText(path, Encoding.Unicode);
-			Assert.AreEqual(expected, Encoding.Unicode.GetString(stream.ToArray()));
+			var actual = Encoding.Unicode.GetString(stream.ToArray());
+
+			// Skip BOM
+			Assert.AreEqual(expected, actual[1..]);
 		}
 		catch(FileNotFoundException)
 		{
