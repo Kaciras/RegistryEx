@@ -65,7 +65,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Snapshots\RegFileWriterTest\" />
+    <Folder Include="Snapshots\" />
   </ItemGroup>
 
 </Project>

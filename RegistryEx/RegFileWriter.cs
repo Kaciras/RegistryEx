@@ -7,8 +7,6 @@ namespace RegistryEx;
 
 public class RegFileWriter : IDisposable
 {
-	public int BinaryWrapLength { get; set; } = 21;
-
 	readonly StreamWriter writer;
 
 	public RegFileWriter(Stream stream)
@@ -42,15 +40,7 @@ public class RegFileWriter : IDisposable
 
 	public void DeleteValue(string name)
 	{
-		if (name == string.Empty)
-		{
-			writer.WriteLine("@=\"\"");
-		}
-		else
-		{
-			WriteValueName(name);
-			writer.WriteLine('-');
-		}
+		SetValue(name, string.Empty, RegistryValueKind.None);
 	}
 
 	public void SetValue(string name, byte[] value)
@@ -77,19 +67,30 @@ public class RegFileWriter : IDisposable
 	{
 		if (name == string.Empty)
 		{
-			writer.Write("@=");
-		} 
+			writer.Write('@');
+		}
 		else
 		{
-			WriteValueName(name);
+			writer.Write('"');
+			writer.Write(name);
+			writer.Write('"');
 		}
+
+		writer.Write('=');
 
 		switch (kind)
 		{
+			case RegistryValueKind.None:
+				writer.WriteLine('-');
+				break;
+			case RegistryValueKind.DWord:
+				writer.Write("dword:");
+				writer.WriteLine(((int)value).ToString("x8"));
+				break;
 			case RegistryValueKind.String:
 				writer.Write('"');
 				writer.Write(value);
-				writer.Write('"');
+				writer.WriteLine('"');
 				break;
 			case RegistryValueKind.ExpandString:
 				writer.Write("hex(2):");
@@ -98,10 +99,6 @@ public class RegFileWriter : IDisposable
 			case RegistryValueKind.Binary:
 				writer.Write("hex:");
 				WriteBinary((byte[])value);
-				break;
-			case RegistryValueKind.DWord:
-				writer.Write("dword:");
-				writer.Write(((int)value).ToString("X8"));
 				break;
 			case RegistryValueKind.MultiString:
 				writer.Write("hex(7):");
@@ -114,16 +111,6 @@ public class RegFileWriter : IDisposable
 			default:
 				throw new ArgumentException("Invalid kind: " + kind);
 		}
-
-		writer.WriteLine();
-	}
-
-	void WriteValueName(string name)
-	{
-		writer.Write('"');
-		writer.Write(name);
-		writer.Write('"');
-		writer.Write('=');
 	}
 
 	void WriteBinary(string value)
@@ -136,24 +123,21 @@ public class RegFileWriter : IDisposable
 		WriteBinary(BitConverter.GetBytes(value));
 	}
 
+	// Regedit wrap lines at 80, but I haven't implemented that.
 	void WriteBinary(byte[] bytes)
 	{
-		var wrapIndex = BinaryWrapLength;
-
-		for (int i = 0; i < bytes.Length; i++)
+		if (bytes.Length == 0)
 		{
-			writer.Write(bytes[i].ToString("X2"));
-
-			if (i != bytes.Length - 1)
-			{
-				writer.Write(',');
-			}
-
-			if (i == wrapIndex)
-			{
-				writer.WriteLine('\\');
-				wrapIndex += BinaryWrapLength;
-			}
+			return;
 		}
+
+		var i = 0;
+		for (; i < bytes.Length - 1; i++)
+		{
+			writer.Write(bytes[i].ToString("x2"));
+			writer.Write(',');
+		}
+
+		writer.WriteLine(bytes[i].ToString("x2"));
 	}
 }
