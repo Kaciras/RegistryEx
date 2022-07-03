@@ -4,7 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace RegistryEx.Test;
 
 [TestClass]
-public class RegFileWriterTest
+public sealed class RegFileWriterTest
 {
 	public TestContext TestContext { get; set; }
 
@@ -31,6 +31,19 @@ public class RegFileWriterTest
 		{
 			File.WriteAllBytes(path, stream.ToArray());
 		}
+	}
+
+	[TestMethod]
+	public void EscapeString()
+	{
+		var stream = new MemoryStream();
+		using (var writer = new RegFileWriter(stream))
+		{
+			writer.SetKey(@"HKEY_CURRENT_USER\_RH_Test_");
+			writer.SetValue("a\"b\"", "a\"b\"");
+			writer.SetValue(@"te\st", @"te\st");
+		}
+		AssertMatchRegistrySnapshot(stream);
 	}
 
 	[TestMethod]

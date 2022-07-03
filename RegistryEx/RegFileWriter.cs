@@ -7,6 +7,8 @@ namespace RegistryEx;
 
 public class RegFileWriter : IDisposable
 {
+	private static readonly char[] Escape = { '"', '\\' };
+
 	readonly StreamWriter writer;
 
 	public RegFileWriter(Stream stream)
@@ -71,9 +73,7 @@ public class RegFileWriter : IDisposable
 		}
 		else
 		{
-			writer.Write('"');
-			writer.Write(name);
-			writer.Write('"');
+			WriteString(name);
 		}
 
 		writer.Write('=');
@@ -88,43 +88,59 @@ public class RegFileWriter : IDisposable
 				writer.WriteLine(((int)value).ToString("x8"));
 				break;
 			case RegistryValueKind.String:
-				writer.Write('"');
-				writer.Write(value);
-				writer.WriteLine('"');
+				WriteString(name);
+				writer.WriteLine();
 				break;
 			case RegistryValueKind.ExpandString:
 				writer.Write("hex(2):");
-				WriteBinary((string)value);
+				WriteBinaryLine((string)value);
 				break;
 			case RegistryValueKind.Binary:
 				writer.Write("hex:");
-				WriteBinary((byte[])value);
+				WriteBinaryLine((byte[])value);
 				break;
 			case RegistryValueKind.MultiString:
 				writer.Write("hex(7):");
-				WriteBinary((string)value);
+				WriteBinaryLine((string)value);
 				break;
 			case RegistryValueKind.QWord:
 				writer.Write("hex(b):");
-				WriteBinary((long)value);
+				WriteBinaryLine((long)value);
 				break;
 			default:
 				throw new ArgumentException("Invalid kind: " + kind);
 		}
 	}
 
-	void WriteBinary(string value)
+	void WriteString(string value)
 	{
-		WriteBinary(Encoding.Unicode.GetBytes(value));
+		var i = 0;
+		var k = value.IndexOfAny(Escape);
+
+		writer.Write('"');
+		while (k != -1)
+		{
+			writer.Write(value.Substring(i, k - i));
+			writer.Write('\\');
+			i = k;
+			k = value.IndexOfAny(Escape, i + 1);
+		}
+		writer.Write(value.Substring(i));
+		writer.Write('"');
 	}
 
-	void WriteBinary(long value)
+	void WriteBinaryLine(string value)
 	{
-		WriteBinary(BitConverter.GetBytes(value));
+		WriteBinaryLine(Encoding.Unicode.GetBytes(value));
+	}
+
+	void WriteBinaryLine(long value)
+	{
+		WriteBinaryLine(BitConverter.GetBytes(value));
 	}
 
 	// Regedit wrap lines at 80, but I haven't implemented that.
-	void WriteBinary(byte[] bytes)
+	void WriteBinaryLine(byte[] bytes)
 	{
 		if (bytes.Length == 0)
 		{
