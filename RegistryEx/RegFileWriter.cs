@@ -5,7 +5,7 @@ using Microsoft.Win32;
 
 namespace RegistryEx;
 
-public class RegFileWriter : IDisposable
+public readonly struct RegFileWriter : IDisposable
 {
 	private static readonly char[] Escape = { '"', '\\' };
 
