@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace RegistryEx.Test;
 
@@ -24,8 +23,8 @@ public sealed class RegFileWriterTest
 			var expected = File.ReadAllText(path, Encoding.Unicode);
 			var actual = Encoding.Unicode.GetString(stream.ToArray());
 
-			//                         Skip BOM
-			Assert.AreEqual(expected, actual[1..]);
+			//                           Skip BOM
+			Assert.AreEqual(expected, actual.Substring(1));
 		}
 		catch (FileNotFoundException)
 		{
@@ -79,7 +78,7 @@ public sealed class RegFileWriterTest
 	[DataRow("foo", RegistryValueKind.DWord)]
 	[DataRow("foo", RegistryValueKind.QWord)]
 	[DataRow("foo", RegistryValueKind.None)]
-	[ExpectedException(typeof(InvalidCastException))]
+	[ExpectedException(typeof(Exception), AllowDerivedTypes = true)]
 	[DataTestMethod]
 	public void SetValueWithIncorrectKind(object value, RegistryValueKind kind)
 	{
