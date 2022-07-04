@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Microsoft.Win32;
 
@@ -42,7 +44,13 @@ public readonly struct RegFileWriter : IDisposable
 
 	public void DeleteValue(string name)
 	{
-		SetValue(name, string.Empty, RegistryValueKind.None);
+		WriteName(name);
+		writer.WriteLine("=-");
+	}
+
+	public void SetValue(string name, IEnumerable<string> value)
+	{
+		SetValue(name, value, RegistryValueKind.MultiString);
 	}
 
 	public void SetValue(string name, byte[] value)
@@ -60,55 +68,60 @@ public readonly struct RegFileWriter : IDisposable
 		SetValue(name, value, RegistryValueKind.QWord);
 	}
 
-	public void SetValue(string name, object value)
+	public void SetValue(string name, string value)
 	{
 		SetValue(name, value, RegistryValueKind.String);
 	}
 
 	public void SetValue(string name, object value, RegistryValueKind kind)
 	{
-		if (name == string.Empty)
+		WriteName(name);
+		writer.Write('=');
+
+		switch (kind)
+		{
+			case RegistryValueKind.DWord:
+				writer.Write("dword:");
+				writer.WriteLine(Convert.ToInt32(value).ToString("x8"));
+				break;
+			case RegistryValueKind.String:
+				WriteString((string)value);
+				writer.WriteLine();
+				break;
+			case RegistryValueKind.Binary:
+				writer.Write("hex:");
+				WriteBinaryLine((byte[])value);
+				break;
+			case RegistryValueKind.None:
+				writer.Write("hex(0):");
+				WriteBinaryLine((byte[])value);
+				break;
+			case RegistryValueKind.ExpandString:
+				writer.Write("hex(2):");
+				WriteBinaryLine((string)value);
+				break;
+			case RegistryValueKind.MultiString:
+				writer.Write("hex(7):");
+				WriteBinaryLine((IEnumerable<string>)value);
+				break;
+			case RegistryValueKind.QWord:
+				writer.Write("hex(b):");
+				WriteBinaryLine(Convert.ToInt64(value));
+				break;
+			default:
+				throw new ArgumentException("Invalid kind: " + kind);
+		}
+	}
+
+	void WriteName(string name)
+	{
+		if (name == "")
 		{
 			writer.Write('@');
 		}
 		else
 		{
 			WriteString(name);
-		}
-
-		writer.Write('=');
-
-		switch (kind)
-		{
-			case RegistryValueKind.None:
-				writer.WriteLine('-');
-				break;
-			case RegistryValueKind.DWord:
-				writer.Write("dword:");
-				writer.WriteLine(((int)value).ToString("x8"));
-				break;
-			case RegistryValueKind.String:
-				WriteString(name);
-				writer.WriteLine();
-				break;
-			case RegistryValueKind.ExpandString:
-				writer.Write("hex(2):");
-				WriteBinaryLine((string)value);
-				break;
-			case RegistryValueKind.Binary:
-				writer.Write("hex:");
-				WriteBinaryLine((byte[])value);
-				break;
-			case RegistryValueKind.MultiString:
-				writer.Write("hex(7):");
-				WriteBinaryLine((string)value);
-				break;
-			case RegistryValueKind.QWord:
-				writer.Write("hex(b):");
-				WriteBinaryLine((long)value);
-				break;
-			default:
-				throw new ArgumentException("Invalid kind: " + kind);
 		}
 	}
 
@@ -127,6 +140,12 @@ public readonly struct RegFileWriter : IDisposable
 		}
 		writer.Write(value.Substring(i));
 		writer.Write('"');
+	}
+
+	void WriteBinaryLine(IEnumerable<string> value)
+	{
+		value = value.Where(s => s.Length > 0);
+		WriteBinaryLine(string.Join("\0", value));
 	}
 
 	void WriteBinaryLine(string value)
@@ -153,7 +172,6 @@ public readonly struct RegFileWriter : IDisposable
 			writer.Write(bytes[i].ToString("x2"));
 			writer.Write(',');
 		}
-
 		writer.WriteLine(bytes[i].ToString("x2"));
 	}
 }
