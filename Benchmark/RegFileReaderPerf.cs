@@ -3,7 +3,7 @@ using RegistryEx.Benchmark.Properties;
 
 namespace RegistryEx.Benchmark;
 
-public class RegFilePerf
+public class RegFileReaderPerf
 {
 	readonly string content = Resources.RegFile;
 
