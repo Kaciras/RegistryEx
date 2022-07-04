@@ -18,12 +18,12 @@ public sealed class RegFileRuleTest
 	[TestMethod]
 	public void CheckNoNeeded()
 	{
-		Assert.IsFalse(RegistryHelper.IsTODO(@"Resources\Kinds.reg"));
+		Assert.IsFalse(RegistryHelper.IsSuitable(@"Resources\Kinds.reg"));
 	}
 
 	[TestMethod]
 	public void Check()
 	{
-		Assert.IsTrue(RegistryHelper.IsTODO(@"Resources\ImportTest.reg"));
+		Assert.IsTrue(RegistryHelper.IsSuitable(@"Resources\ImportTest.reg"));
 	}
 }

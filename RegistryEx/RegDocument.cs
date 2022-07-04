@@ -13,8 +13,8 @@ public class RegDocument
 	
 	public void WriteTo(string file)
 	{
-		using var writer = new StreamWriter(File.OpenWrite(file), Encoding.Unicode);
-		writer.WriteLine(VER_LINE);
+		using var writer = new RegFileWriter(file);
+		
 
 
 	}

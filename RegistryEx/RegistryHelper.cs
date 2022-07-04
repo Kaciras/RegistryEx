@@ -71,7 +71,7 @@ public static class RegistryHelper
 		return basekey.ContainsSubKey(path);
 	}
 
-	public static bool IsTODO(string file)
+	public static bool IsSuitable(string file)
 	{
 		var reader = RegFileReader.OpenFile(file);
 		var expected = true;

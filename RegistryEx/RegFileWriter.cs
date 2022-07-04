@@ -13,6 +13,8 @@ public readonly struct RegFileWriter : IDisposable
 
 	readonly StreamWriter writer;
 
+	public RegFileWriter(string file) : this(File.OpenWrite(file)) { }
+
 	public RegFileWriter(Stream stream)
 	{
 		writer = new(stream, Encoding.Unicode);
