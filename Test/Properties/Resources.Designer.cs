@@ -91,12 +91,11 @@ namespace RegistryEx.Test.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Windows Registry Editor Version 5.00
         ///
-        ///; 每种类型的值都有一个
-        ///
         ///[HKEY_CURRENT_USER\_RH_Test_]
         ///@=&quot;文字文字&quot;
         ///&quot;Binary&quot;=hex:fa,51,6f,89
         ///&quot;Dword&quot;=dword:00000123
+        ///&quot;None&quot;=hex(0):19,89,06,04,00
         ///&quot;Qword&quot;=hex(b):88,68,66,00,00,00,00,00
         ///&quot;Multi&quot;=hex(7):53,00,74,00,72,00,30,00,00,00,53,00,74,00,72,00,31,00,00,00,00,\
         ///  00
@@ -127,23 +126,23 @@ namespace RegistryEx.Test.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Windows Registry Editor Version 5.00
         ///
-        ///[HKEY_CLASSES_ROOT\_RH_Test_]
+        ///[HKEY_CURRENT_USER\_RH_Test_]
+        ///&quot;foo&quot;=&quot;bar&quot;
         ///
-        ///[HKEY_CLASSES_ROOT\_RH_Test_\bar]
+        ///[HKEY_CURRENT_USER\_RH_Test_\Sub]
+        ///@=dword:00000044
         ///
-        ///[HKEY_CLASSES_ROOT\_RH_Test_\bar\key]
+        ///[-HKEY_CURRENT_USER\_RH_Test_]
         ///
-        ///[HKEY_CLASSES_ROOT\_RH_Test_\baz]
-        ///
-        ///[HKEY_CLASSES_ROOT\_RH_Test_\foo]
-        ///
-        ///[HKEY_CLASSES_ROOT\_RH_Test_\foo\key]
-        ///
+        ///[HKEY_CURRENT_USER\_RH_Test_]
+        ///@=&quot;Invalid&quot;
+        ///&quot;foo&quot;=&quot;baz&quot;
+        ///@=dword:00000123
         ///.
         /// </summary>
-        internal static string Search {
+        internal static string Redundant {
             get {
-                return ResourceManager.GetString("Search", resourceCulture);
+                return ResourceManager.GetString("Redundant", resourceCulture);
             }
         }
         
@@ -166,9 +165,9 @@ namespace RegistryEx.Test.Properties {
         ///   Looks up a localized string similar to Windows Registry Editor Version 5.00
         ///
         ///[HKEY_CURRENT_USER\_RH_Test_]
-        ///&quot;Multi&quot;=hex(7):53,00,74,00,\ ;测试多行 + 注释
+        ///&quot;Multi&quot;=hex(7):53,00,74,00,\ ;Comment at end
         ///  72,00,30,00,\
-        ///  ;注释在值内占一行
+        ///  ;Comment line inside the value
         ///  00,00,53,00,74,00,72,00,31,00,00,00,00,\
         ///  00
         ///

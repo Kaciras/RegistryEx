@@ -1,0 +1,14 @@
+﻿Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\_RH_Test_]
+"foo"="bar"
+
+[HKEY_CURRENT_USER\_RH_Test_\Sub]
+@=dword:00000044
+
+[-HKEY_CURRENT_USER\_RH_Test_]
+
+[HKEY_CURRENT_USER\_RH_Test_]
+@="Invalid"
+"foo"="baz"
+@=dword:00000123

@@ -53,7 +53,7 @@
     <None Update="Resources\NoKey.reg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\Search.reg">
+    <None Update="Resources\Redundant.reg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Resources\TruncatedValue.reg">
