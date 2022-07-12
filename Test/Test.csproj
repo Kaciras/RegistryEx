@@ -66,6 +66,7 @@
 
   <ItemGroup>
     <Folder Include="Snapshots\" />
+    <Folder Include="Snapshots\RegDocumentTest\" />
     <Folder Include="Snapshots\RegFileWriterTest\" />
   </ItemGroup>
 

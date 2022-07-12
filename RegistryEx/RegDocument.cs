@@ -119,9 +119,9 @@ public class RegDocument
 		return document;
 	}
 
-	public void WriteTo(string file)
+	public void WriteTo(Stream outputStream)
 	{
-		using var writer = new RegFileWriter(file);
+		using var writer = new RegFileWriter(outputStream);
 
 		foreach (var keyName in Erased)
 		{
@@ -139,7 +139,7 @@ public class RegDocument
 				}
 				else
 				{
-					writer.SetValue(key, item.Value, item.Kind);
+					writer.SetValue(name, item.Value, item.Kind);
 				}
 			}
 		}

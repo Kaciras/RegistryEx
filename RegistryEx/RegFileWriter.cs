@@ -7,6 +7,9 @@ using Microsoft.Win32;
 
 namespace RegistryEx;
 
+/// <summary>
+/// Writer for Registration Entries (.reg) file.
+/// </summary>
 public readonly struct RegFileWriter : IDisposable
 {
 	private static readonly char[] Escape = { '"', '\\' };
@@ -24,7 +27,6 @@ public readonly struct RegFileWriter : IDisposable
 
 	public void Dispose()
 	{
-		writer.WriteLine();
 		writer.Dispose();
 	}
 

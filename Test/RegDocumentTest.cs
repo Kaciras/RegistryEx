@@ -55,8 +55,18 @@ public class RegDocumentTest
 	public void Write()
 	{
 		var doc = new RegDocument();
-		doc.DeleteKey(@"HKEY_CURRENT_USER\_RH_Test_\foobar");
+		doc.DeleteKey(@"HKEY_CURRENT_USER\_RH_Test_");
+
 		var key = doc.CreateKey(@"HKEY_CURRENT_USER\_RH_Test_");
-		key.Add("", default);
+		key["Deleted"] = default;
+		key["foo"] = new RegistryValue("baz", RegistryValueKind.String);
+		key[""] = new RegistryValue(0x123, RegistryValueKind.DWord);
+
+		var key2 = doc.CreateKey(@"HKEY_CURRENT_USER\_RH_Test_\Sub");
+		key2[""] = new RegistryValue(0x123, RegistryValueKind.QWord);
+
+		var stream = new MemoryStream();
+		doc.WriteTo(stream);
+		Snapshots.AssertMatchRegistrySnapshot(stream);
 	}
 }

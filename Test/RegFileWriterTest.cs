@@ -5,33 +5,6 @@ namespace RegistryEx.Test;
 [TestClass]
 public sealed class RegFileWriterTest
 {
-	public TestContext TestContext { get; set; }
-
-	void AssertMatchRegistrySnapshot(MemoryStream stream)
-	{
-		var directory = Path.Combine(
-			AppDomain.CurrentDomain.BaseDirectory,
-			"../../..",
-			"Snapshots",
-			"RegFileWriterTest"
-		);
-		Directory.CreateDirectory(directory);
-
-		var path = Path.Combine(directory, TestContext.TestName + ".reg");
-		try
-		{
-			var expected = File.ReadAllText(path, Encoding.Unicode);
-			var actual = Encoding.Unicode.GetString(stream.ToArray());
-
-			//                           Skip BOM
-			Assert.AreEqual(expected, actual.Substring(1));
-		}
-		catch (FileNotFoundException)
-		{
-			File.WriteAllBytes(path, stream.ToArray());
-		}
-	}
-
 	[TestMethod]
 	public void EscapeString()
 	{
@@ -42,7 +15,7 @@ public sealed class RegFileWriterTest
 			writer.SetValue("a\"b\"", "a\"b\"");
 			writer.SetValue(@"te\st", @"te\st");
 		}
-		AssertMatchRegistrySnapshot(stream);
+		Snapshots.AssertMatchRegistrySnapshot(stream);
 	}
 
 	[TestMethod]
@@ -58,7 +31,7 @@ public sealed class RegFileWriterTest
 			writer.SetValue("Bytes", new byte[100]);
 			writer.SetValue("Multi", new string[] { "foo", "", "bar" });
 		}
-		AssertMatchRegistrySnapshot(stream);
+		Snapshots.AssertMatchRegistrySnapshot(stream);
 	}
 
 	[ExpectedException(typeof(ArgumentException))]
@@ -98,7 +71,7 @@ public sealed class RegFileWriterTest
 			writer.SetValue("QWord", 1, RegistryValueKind.QWord);
 			writer.SetValue("None", new byte[50], RegistryValueKind.None);
 		}
-		AssertMatchRegistrySnapshot(stream);
+		Snapshots.AssertMatchRegistrySnapshot(stream);
 	}
 	  
 	[TestMethod]
@@ -112,7 +85,7 @@ public sealed class RegFileWriterTest
 			writer.DeleteKey(@"HKEY_CURRENT_USER\_RH_Test_");
 			writer.SetKey(@"HKEY_CURRENT_USER\_RH_Test_");
 		}
-		AssertMatchRegistrySnapshot(stream);
+		Snapshots.AssertMatchRegistrySnapshot(stream);
 	}
 
 	[TestMethod]
@@ -126,6 +99,6 @@ public sealed class RegFileWriterTest
 			writer.DeleteValue("SomeValue");
 			writer.DeleteValue(string.Empty);
 		}
-		AssertMatchRegistrySnapshot(stream);
+		Snapshots.AssertMatchRegistrySnapshot(stream);
 	}
 }
