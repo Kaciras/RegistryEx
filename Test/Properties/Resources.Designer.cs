@@ -63,20 +63,6 @@ namespace RegistryEx.Test.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Windows Registry Editor Version 5.00
         ///
-        ///[HKEY_CURRENT_USER\_RH_Test_\Key]
-        ///&quot;StringValue&quot;=&quot;中文内容&quot;
-        ///
-        ///.
-        /// </summary>
-        internal static string ImportTest {
-            get {
-                return ResourceManager.GetString("ImportTest", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Windows Registry Editor Version 5.00
-        ///
         ///[HKEY_CURRENT_USER\_RH_Test_]
         ///&quot;Test&quot;=foobar:00000123
         ///
@@ -135,6 +121,7 @@ namespace RegistryEx.Test.Properties {
         ///[-HKEY_CURRENT_USER\_RH_Test_]
         ///
         ///[HKEY_CURRENT_USER\_RH_Test_]
+        ///&quot;foo&quot;=-
         ///@=&quot;Invalid&quot;
         ///&quot;foo&quot;=&quot;baz&quot;
         ///@=dword:00000123
@@ -143,6 +130,21 @@ namespace RegistryEx.Test.Properties {
         internal static string Redundant {
             get {
                 return ResourceManager.GetString("Redundant", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Windows Registry Editor Version 5.00
+        ///
+        ///[HKEY_CURRENT_USER\_RH_Test_\Key]
+        ///&quot;foo&quot;=&quot;baz&quot;
+        ///@=dword:00000123
+        ///
+        ///.
+        /// </summary>
+        internal static string SubKey {
+            get {
+                return ResourceManager.GetString("SubKey", resourceCulture);
             }
         }
         

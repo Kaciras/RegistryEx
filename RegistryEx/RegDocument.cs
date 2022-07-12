@@ -6,76 +6,116 @@ using Microsoft.Win32;
 
 namespace RegistryEx;
 
-public class RegDocument : Dictionary<string, Dictionary<string, PlainRegistryValue>>
+using ValueDict = Dictionary<string, RegistryValue>;
+
+public class RegDocument 
 {
 	internal const string VER_LINE = "Windows Registry Editor Version 5.00";
 
 	public HashSet<string> Erased { get; } = new();
 
-	public void DeleteKey(string keyName)
+	public Dictionary<string, ValueDict> Created { get; } = new();
+
+	public void DeleteKey(string name)
 	{
-		var s = keyName.IndexOf('\\') + 1;
-		if (s == 0 || s == keyName.Length)
+		var s = name.IndexOf('\\') + 1;
+		if (s == 0 || s == name.Length)
 		{
 			throw new ArgumentException("Can not delete root key");
 		}
 
-		Erased.Add(keyName);
+		Erased.Add(name);
 
-		foreach (var existing in Keys)
+		foreach (var existing in Created.Keys)
 		{
-			if (existing.StartsWith(keyName))
-				Remove(existing);
+			if (!existing.StartsWith(name))
+			{
+				continue;
+			}
+			if (existing.Length == name.Length ||
+				existing[name.Length] == '\\')
+			{
+				Created.Remove(existing);
+			}
 		}
 	}
 
-	public void Load(string file)
+	public void DeleteOldTree(string name)
 	{
-		var currentKeyName = "";
-		Dictionary<string, PlainRegistryValue> currentKey = null;
-		var reader = RegFileReader.OpenFile(file);
+		Erased.Add(name);
+	}
+
+	public ValueDict CreateKey(string name)
+	{
+		if (Created.TryGetValue(name, out var e))
+		{
+			return e;
+		}
+		return Created[name] = new ValueDict();
+	}
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="content"></param>
+	public void Load(string content)
+	{
+		var reader = new RegFileReader(content);
+		ValueDict key = null!; // The reader has ensured key exists.
 
 		while (reader.Read())
 		{
 			if (reader.IsKey)
 			{
-				if (currentKeyName != reader.Key)
-				{
-					currentKeyName = reader.Key;
-				}
 				if (reader.IsDelete)
 				{
 					DeleteKey(reader.Key);
 				}
-				else if (TryGetValue(currentKeyName, out var e))
-				{
-					currentKey = e;
-				}
 				else
 				{
-					currentKey = new();
-					this[currentKeyName] = currentKey;
+					key = CreateKey(reader.Key);
 				}
 			}
 			else
 			{
-				if (reader.IsDelete)
-				{
-					currentKey[reader.Name] = new PlainRegistryValue(null, 0);
-				}
-				else
-				{
-					currentKey[reader.Name] = new PlainRegistryValue(reader.Value, reader.Kind);
-				}
+				key[reader.Name] = reader.IsDelete 
+					? default
+					: new RegistryValue(reader.Value, reader.Kind);
 			}
 		}
 	}
 
+	public void LoadRegistry(RegistryKey key)
+	{
+		var dict = CreateKey(key.Name);
+		foreach (var name in key.GetValueNames())
+		{
+			var kind = key.GetValueKind(name);
+			var value = key.GetValue(name)!;
+			dict[name] = new RegistryValue(value, kind);
+		}
+
+		foreach (var name in key.GetSubKeyNames())
+		{
+			using var subKey = key.OpenSubKey(name);
+			LoadRegistry(subKey!);
+		}
+	}
+
+	public RegDocument CreateRestorePoint()
+	{
+		var restoration = new RegDocument();
+		foreach (var name in Erased)
+		{
+			RegistryHelper.OpenKey(name);
+		}
+		throw new InvalidOperationException();
+	}
 
 	public static RegDocument ParseFile(string file)
 	{
 		var document = new RegDocument();
-		document.Load(file);
+		document.Load(File.ReadAllText(file));
 		return document;
 	}
 
@@ -88,18 +128,18 @@ public class RegDocument : Dictionary<string, Dictionary<string, PlainRegistryVa
 			writer.DeleteKey(keyName);
 		}
 
-		foreach (var pair in this)
+		foreach (var (key, values) in Created)
 		{
-			writer.SetKey(pair.Key);
-			foreach (var item in pair.Value)
+			writer.SetKey(key);
+			foreach (var (name, item) in values)
 			{
-				if (item.Value.IsDelete)
+				if (item.IsDelete)
 				{
-					writer.DeleteValue(item.Key);
+					writer.DeleteValue(name);
 				}
 				else
 				{
-					writer.SetValue(item.Key, item.Value.Value, item.Value.Kind);
+					writer.SetValue(key, item.Value, item.Kind);
 				}
 			}
 		}

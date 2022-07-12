@@ -41,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Resources\ImportTest.reg">
+    <None Update="Resources\SubKey.reg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Resources\InvalidKind.reg">

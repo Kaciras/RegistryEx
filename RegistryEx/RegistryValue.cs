@@ -2,7 +2,7 @@
 
 namespace RegistryEx;
 
-public record struct PlainRegistryValue(
+public record struct RegistryValue(
 	object Value,
 	RegistryValueKind Kind)
 {
