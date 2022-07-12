@@ -69,4 +69,18 @@ public class RegDocumentTest
 		doc.WriteTo(stream);
 		Snapshots.AssertMatchRegFile(stream);
 	}
+
+	[TestMethod]
+	public void CreateRestorePoint()
+	{
+		using var _ = TestFixture.Import("SubKey");
+
+		var doc = new RegDocument();
+		doc.DeleteKey(@"HKEY_CURRENT_USER\_RH_Test_");
+
+		doc.CreateKey(@"HKEY_CURRENT_USER\_SomeKey_");
+
+		var reverse = doc.CreateRestorePoint();
+		Assert.AreEqual(1, reverse.Erased.Count);
+	}
 }

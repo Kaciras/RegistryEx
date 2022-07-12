@@ -65,51 +65,86 @@ public class RegDocument
 
 		while (reader.Read())
 		{
-			if (reader.IsKey)
+			switch (reader.IsKey, reader.IsDelete)
 			{
-				if (reader.IsDelete)
-				{
-					DeleteKey(reader.Key);
-				}
-				else
-				{
+				case (true, false):
 					key = CreateKey(reader.Key);
-				}
-			}
-			else
-			{
-				key[reader.Name] = reader.IsDelete 
-					? default
-					: new RegistryValue(reader.Value, reader.Kind);
+					break;
+				case (true, true):
+					DeleteKey(reader.Key);
+					break;
+				case (false, false):
+					key[reader.Name] = new RegistryValue(reader.Value, reader.Kind);
+					break;
+				case (false, true):
+					key[reader.Name] = RegistryValue.DELETED;
+					break;
 			}
 		}
 	}
 
 	public void LoadRegistry(RegistryKey key)
 	{
-		var dict = CreateKey(key.Name);
-		foreach (var name in key.GetValueNames())
-		{
-			var kind = key.GetValueKind(name);
-			var value = key.GetValue(name)!;
-			dict[name] = new RegistryValue(value, kind);
-		}
-
 		foreach (var name in key.GetSubKeyNames())
 		{
 			using var subKey = key.OpenSubKey(name);
 			LoadRegistry(subKey!);
+		}
+
+		var dict = CreateKey(key.Name);
+		foreach (var name in key.GetValueNames())
+		{
+			dict[name] = RegistryValue.From(key, name);
+		}
+	}
+
+	public void Merge(RegDocument other)
+	{
+		foreach (var item in other.Erased)
+		{
+			Erased.Add(item);
+		}
+		foreach (var (k, d) in other.Created)
+		{
+			var dict = CreateKey(k);
+			foreach (var (n, v) in d) 
+				dict[n] = v;
+		}
+	}
+
+	public void Revert(RegDocument other)
+	{
+		foreach (var name in other.Erased)
+		{
+			using var key = RegistryHelper.OpenKey(name);
+			LoadRegistry(key!);
+		}
+		foreach (var (name, dict) in other.Created)
+		{
+			using var key = RegistryHelper.OpenKey(name);
+			if (key == null)
+			{
+				DeleteOldTree(name);
+				continue;
+			}
+
+			var valueDict = CreateKey(name);
+			foreach (var (vn, val) in dict)
+			{
+				var actual = RegistryValue.From(key, vn);
+				if (actual != val)
+				{
+					valueDict[vn] = actual;
+				}
+			}
 		}
 	}
 
 	public RegDocument CreateRestorePoint()
 	{
 		var restoration = new RegDocument();
-		foreach (var name in Erased)
-		{
-			RegistryHelper.OpenKey(name);
-		}
-		throw new InvalidOperationException();
+		restoration.Revert(this);
+		return restoration;
 	}
 
 	public static RegDocument ParseFile(string file)

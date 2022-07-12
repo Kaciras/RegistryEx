@@ -196,6 +196,7 @@ public ref struct RegFileReader
 	{
 		"dword" => RegistryValueKind.DWord,
 		"hex" => RegistryValueKind.Binary,
+		"hex(0)" => RegistryValueKind.None,
 		"hex(2)" => RegistryValueKind.ExpandString,
 		"hex(7)" => RegistryValueKind.MultiString,
 		"hex(b)" => RegistryValueKind.QWord,
@@ -218,13 +219,13 @@ public ref struct RegFileReader
 
 		return kind switch
 		{
+			RegistryValueKind.Binary or RegistryValueKind.None => ToBytes(),
 			RegistryValueKind.ExpandString => ToString(),
 			RegistryValueKind.MultiString => ToString().Split('\0'),
-			RegistryValueKind.Binary => ToBytes(),
 			RegistryValueKind.DWord => int.Parse(text, NumberStyles.HexNumber),
 			RegistryValueKind.QWord => BitConverter.ToInt64(ToBytes(), 0),
 			RegistryValueKind.String => text,
-			_ => throw new InvalidProgramException("不会运行到这一句"),
+			_ => throw new InvalidProgramException("Unsupported kind"),
 		};
 	}
 
