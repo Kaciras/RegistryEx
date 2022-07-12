@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 namespace RegistryEx.Test;
 
@@ -14,7 +10,7 @@ internal static class Snapshots
 	[AssemblyInitialize]
 	public static void Setup(TestContext ctx) => context = ctx;
 
-	public static void AssertMatchRegistrySnapshot(MemoryStream stream)
+	public static void AssertMatchRegFile(MemoryStream stream)
 	{
 		var className = context.FullyQualifiedTestClassName;
 		var i = className.LastIndexOf(".");
@@ -42,7 +38,14 @@ internal static class Snapshots
 		}
 		catch (FileNotFoundException)
 		{
-			File.WriteAllBytes(path, stream.ToArray());
+			if (Environment.GetEnvironmentVariable("CI") == null)
+			{
+				File.WriteAllBytes(path, stream.ToArray());
+			}
+			else
+			{
+				throw new AssertFailedException("Missing snapshot");
+			}
 		}
 	}
 }

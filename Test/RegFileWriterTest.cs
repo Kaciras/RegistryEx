@@ -15,7 +15,7 @@ public sealed class RegFileWriterTest
 			writer.SetValue("a\"b\"", "a\"b\"");
 			writer.SetValue(@"te\st", @"te\st");
 		}
-		Snapshots.AssertMatchRegistrySnapshot(stream);
+		Snapshots.AssertMatchRegFile(stream);
 	}
 
 	[TestMethod]
@@ -31,7 +31,7 @@ public sealed class RegFileWriterTest
 			writer.SetValue("Bytes", new byte[100]);
 			writer.SetValue("Multi", new string[] { "foo", "", "bar" });
 		}
-		Snapshots.AssertMatchRegistrySnapshot(stream);
+		Snapshots.AssertMatchRegFile(stream);
 	}
 
 	[ExpectedException(typeof(ArgumentException))]
@@ -71,7 +71,7 @@ public sealed class RegFileWriterTest
 			writer.SetValue("QWord", 1, RegistryValueKind.QWord);
 			writer.SetValue("None", new byte[50], RegistryValueKind.None);
 		}
-		Snapshots.AssertMatchRegistrySnapshot(stream);
+		Snapshots.AssertMatchRegFile(stream);
 	}
 	  
 	[TestMethod]
@@ -85,7 +85,7 @@ public sealed class RegFileWriterTest
 			writer.DeleteKey(@"HKEY_CURRENT_USER\_RH_Test_");
 			writer.SetKey(@"HKEY_CURRENT_USER\_RH_Test_");
 		}
-		Snapshots.AssertMatchRegistrySnapshot(stream);
+		Snapshots.AssertMatchRegFile(stream);
 	}
 
 	[TestMethod]
@@ -99,6 +99,6 @@ public sealed class RegFileWriterTest
 			writer.DeleteValue("SomeValue");
 			writer.DeleteValue(string.Empty);
 		}
-		Snapshots.AssertMatchRegistrySnapshot(stream);
+		Snapshots.AssertMatchRegFile(stream);
 	}
 }

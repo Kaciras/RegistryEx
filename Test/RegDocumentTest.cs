@@ -67,6 +67,6 @@ public class RegDocumentTest
 
 		var stream = new MemoryStream();
 		doc.WriteTo(stream);
-		Snapshots.AssertMatchRegistrySnapshot(stream);
+		Snapshots.AssertMatchRegFile(stream);
 	}
 }
