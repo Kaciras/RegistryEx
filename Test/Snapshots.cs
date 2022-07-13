@@ -1,33 +1,45 @@
-﻿using System.Text;
+﻿using System;
+using System.Diagnostics;
+using System.Reflection;
+using System.Text;
 
 namespace RegistryEx.Test;
 
-[TestClass]
+/// <summary>
+/// A snapshot testing tool to simply assertion of `.reg` file result.
+/// <br/>
+/// Files are stored at {Project dir}/Snapshots/{Class}/{Method}-{Index}.reg
+/// </summary>
 internal static class Snapshots
 {
-	static TestContext context = null!;
+	static MethodBase? latestMethod;
+	static int index = 0;
 
-	[AssemblyInitialize]
-	public static void Setup(TestContext ctx) => context = ctx;
+	public static void AssertMatchRegDocument(RegDocument document)
+	{
+		var stream = new MemoryStream();
+		document.WriteTo(stream);
+		AssertMatchRegFile(stream);
+	}
 
 	public static void AssertMatchRegFile(MemoryStream stream)
 	{
-		var className = context.FullyQualifiedTestClassName;
-		var i = className.LastIndexOf(".");
-		if (i != -1)
-		{
-			className = className.Substring(i + 1);
-		}
-
+		var method = GetTestMethod();
 		var directory = Path.Combine(
 			AppDomain.CurrentDomain.BaseDirectory,
 			"../../..",
 			"Snapshots",
-			className
+			method.DeclaringType!.Name
 		);
 		Directory.CreateDirectory(directory);
 
-		var path = Path.Combine(directory, context.TestName + ".reg");
+		if (latestMethod != method)
+		{
+			index = 0;
+			latestMethod = method;
+		}
+
+		var path = Path.Combine(directory, $"{method.Name}-{index}.reg");
 		try
 		{
 			var expected = File.ReadAllText(path, Encoding.Unicode);
@@ -47,5 +59,19 @@ internal static class Snapshots
 				throw new AssertFailedException("Missing snapshot");
 			}
 		}
+	}
+
+	static MethodBase GetTestMethod()
+	{
+		foreach (var stackFrame in new StackTrace().GetFrames())
+		{
+			var methodBase = stackFrame.GetMethod()!;
+			var attributes = methodBase.GetCustomAttributes(typeof(TestMethodAttribute), false);
+			if (attributes.Length >= 1)
+			{
+				return methodBase;
+			}
+		}
+		throw new InvalidOperationException("Snapshots.Assert* can only be called on test");
 	}
 }
