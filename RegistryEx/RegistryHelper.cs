@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Runtime.CompilerServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
@@ -47,7 +45,7 @@ public static class RegistryHelper
 		"HKEY_USERS" or "HKU" => Registry.Users,
 		"HKEY_CURRENT_CONFIG" or "HKCC" => Registry.CurrentConfig,
 		"HKEY_PERFORMANCE_DATA" => Registry.PerformanceData,
-		_ => null, // 微软的 API 在不存在时返回 null，这里也保持一致而不是用异常。
+		_ => null, // `HKEY_DYN_DATA => Registry.DynData` is not supported.
 	};
 
 	/// <summary>
@@ -69,78 +67,6 @@ public static class RegistryHelper
 		return basekey.ContainsSubKey(path);
 	}
 
-	public static bool CheckSuitable(string content)
-	{
-		var reader = new RegFileReader(content);
-		var expected = true;
-
-		while (expected && reader.Read())
-		{
-			if (reader.IsKey)
-			{
-				var exists = KeyExists(reader.Key);
-				expected = reader.IsDelete ^ exists;
-			}
-			else if (reader.IsDelete)
-			{
-				expected = Registry.GetValue(reader.Key, reader.Name, null) == null;
-			}
-			else
-			{
-				expected = CheckValueInDB(reader.Key,
-					reader.Name, reader.Value, reader.Kind);
-			}
-		}
-
-		return expected;
-	}
-
-	/// <summary>
-	/// 检查 Reg 文件里的一个值是否已经存在于注册表中。
-	/// </summary>
-	/// <param name="key">键路径</param>
-	/// <param name="name">值名</param>
-	/// <param name="valueStr">reg 文件里字符串形式的值</param>
-	/// <param name="kind">值类型</param>
-	static bool CheckValueInDB(string key, string name, object expected, RegistryValueKind kind)
-	{
-		using var keyObj = OpenKey(key);
-		var actual = keyObj.GetValue(name, null, RegistryValueOptions.DoNotExpandEnvironmentNames);
-
-		bool ConvertAndCheck<T>()
-		{
-			if (actual is not T[] || actual == null)
-			{
-				return false;
-			}
-			return ((T[])expected).SequenceEqual((T[])actual);
-		}
-
-		return kind switch
-		{
-			RegistryValueKind.MultiString => ConvertAndCheck<string>(),
-			RegistryValueKind.Binary => ConvertAndCheck<byte>(),
-			RegistryValueKind.Unknown or RegistryValueKind.None => throw new Exception("Invalid kind"),
-			_ => expected.Equals(actual),
-		};
-	}
-
-	/// <summary>
-	/// 导出注册表键，相当于注册表编辑器里右键 -> 导出。
-	/// </summary>
-	/// <param name="file">保存的文件</param>
-	/// <param name="path">注册表键</param>
-	public static void Export(string file, string path)
-	{
-		InternalUtils.Execute("regedit", $"/e {file} {path}");
-	}
-
-	// 必须用 regedit.exe，如果用 regedt32 可能出错，上面的一样
-	public static void Import(string file)
-	{
-		InternalUtils.Execute("regedit", $"/s {file}");
-	}
-
 	/// <summary>
 	/// 从注册表中读取指定 CLSID 项的默认值。
 	/// </summary>
@@ -154,13 +80,14 @@ public static class RegistryHelper
 	}
 
 	/// <summary>
-	/// Add necesary token privilieges to current process for `Elevate()`
+	/// Add necesary token privilieges that some methods required.
 	/// </summary>
 	/// <see href="https://stackoverflow.com/a/38727406/7065321"></see>
 	public static void AddTokenPrivileges()
 	{
-		TokenManipulator.AddPrivilege("SeRestorePrivilege");
 		TokenManipulator.AddPrivilege("SeTakeOwnershipPrivilege");
+		TokenManipulator.AddPrivilege("SeBackupPrivilege");
+		TokenManipulator.AddPrivilege("SeRestorePrivilege");
 	}
 
 	/// <summary>

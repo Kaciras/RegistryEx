@@ -1,5 +1,6 @@
 ﻿using System.Security;
 using System.Security.AccessControl;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace RegistryEx.Test;
 
@@ -49,27 +50,6 @@ public sealed class RegHelperTest
 	{
 		Assert.IsTrue(Registry.LocalMachine.ContainsSubKey(@"SOFTWARE\Microsoft"));
 		Assert.IsFalse(Registry.LocalMachine.ContainsSubKey(@"SOFTWARE\Xicrosoft"));
-	}
-
-	[TestMethod]
-	public void Import()
-	{
-		RegistryHelper.Import(@"Resources\ImportTest.reg");
-
-		var value = Registry.GetValue(@"HKEY_CURRENT_USER\_RH_Test_\Key", "StringValue", null);
-		Assert.AreEqual("中文内容", value);
-	}
-
-	[TestMethod]
-	public void Export()
-	{
-		using (var key = Registry.CurrentUser.CreateSubKey(@"_RH_Test_\Key"))
-		{
-			key.SetValue("StringValue", "中文内容");
-		}
-		RegistryHelper.Export("ExportTest.reg", @"HKEY_CURRENT_USER\_RH_Test_\Key");
-
-		Assert.AreEqual(Resources.ImportTest, File.ReadAllText("ExportTest.reg"));
 	}
 
 	[ExpectedException(typeof(IOException))]
