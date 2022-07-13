@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Linq;
 using Microsoft.Win32;
 
 namespace RegistryEx;
@@ -26,6 +26,7 @@ public class RegDocument
 
 		Erased.Add(name);
 
+		var removed = new List<string>();
 		foreach (var existing in Created.Keys)
 		{
 			if (!existing.StartsWith(name))
@@ -35,9 +36,11 @@ public class RegDocument
 			if (existing.Length == name.Length ||
 				existing[name.Length] == '\\')
 			{
-				Created.Remove(existing);
+				removed.Add(existing);
 			}
 		}
+
+		removed.ForEach(v => Created.Remove(v));
 	}
 
 	public void DeleteOldTree(string name)
@@ -52,6 +55,11 @@ public class RegDocument
 			return e;
 		}
 		return Created[name] = new ValueDict();
+	}
+
+	string Normalize(string name)
+	{
+		return name;
 	}
 
 	/// <summary>
@@ -74,7 +82,7 @@ public class RegDocument
 					DeleteKey(reader.Key);
 					break;
 				case (false, false):
-					key[reader.Name] = new RegistryValue(reader.Value, reader.Kind);
+					key[reader.Name] = new(reader.Value, reader.Kind);
 					break;
 				case (false, true):
 					key[reader.Name] = RegistryValue.DELETED;
@@ -132,7 +140,7 @@ public class RegDocument
 			foreach (var (vn, val) in dict)
 			{
 				var actual = RegistryValue.From(key, vn);
-				if (actual != val)
+				if (!actual.Equals(val))
 				{
 					valueDict[vn] = actual;
 				}
@@ -145,6 +153,47 @@ public class RegDocument
 		var restoration = new RegDocument();
 		restoration.Revert(this);
 		return restoration;
+	}
+
+	public bool IsSuitable()
+	{
+		var erased = new HashSet<string>(Erased);
+		foreach (var (k, d) in Created)
+		{
+			var key = RegistryHelper.OpenKey(k);
+			if (key == null)
+			{
+				return false;
+			}
+
+			foreach (var (n, e) in d)
+			{
+				if (!e.Equals(RegistryValue.From(key, n)))
+				{
+					return false;
+				}
+			}
+
+			if (erased.Remove(k) && key.ValueCount != d.Count)
+			{
+				return false;
+			}
+		}
+		return erased
+			.Select(RegistryHelper.KeyExists)
+			.All(e => !e);
+	}
+
+	public void Import()
+	{
+		foreach (var keyName in Erased)
+		{
+			// delete key tree
+		}
+		foreach (var (k, d) in Created)
+		{
+			
+		}
 	}
 
 	public static RegDocument ParseFile(string file)
