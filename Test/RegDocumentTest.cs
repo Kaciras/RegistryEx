@@ -5,7 +5,7 @@ namespace RegistryEx.Test;
 public class RegDocumentTest
 {
 	[TestMethod]
-	public void Load()
+	public void ParseFile()
 	{
 		var doc = RegDocument.ParseFile(@"Resources/Kinds.reg");
 		Assert.AreEqual(1, doc.Created.Count);
@@ -20,14 +20,16 @@ public class RegDocumentTest
 		doc.DeleteKey(@"HKEY_CURRENT_USER\_RH_Test_");
 
 		CollectionAssert.AreEqual(new string[] { @"HKEY_CURRENT_USER\_RH_Test_/foobar" }, doc.Created.Keys);
-		Assert.AreEqual(new HashSet<string>(){ @"HKEY_CURRENT_USER\_RH_Test_" }, doc.Erased);
+
+		Assert.AreEqual(1, doc.Erased.Count);
+		Assert.AreEqual(@"HKEY_CURRENT_USER\_RH_Test_", doc.Erased.First());
 	}
 
 	[TestMethod]
 	public void Deterministic()
 	{
 		var doc = new RegDocument();
-		doc.Load(@"Resources/Redundant.reg");
+		doc.Load(Resources.Redundant);
 		Assert.AreEqual(1, doc.Created.Count);
 	}
 
@@ -65,9 +67,7 @@ public class RegDocumentTest
 		var key2 = doc.CreateKey(@"HKEY_CURRENT_USER\_RH_Test_\Sub");
 		key2[""] = new RegistryValue(0x123, RegistryValueKind.QWord);
 
-		var stream = new MemoryStream();
-		doc.WriteTo(stream);
-		Snapshots.AssertMatchRegFile(stream);
+		Snapshots.AssertMatchRegDocument(doc);
 	}
 
 	[TestMethod]

@@ -9,7 +9,7 @@ public sealed class RegistryKeyExtensionTest
 	[TestInitialize]
 	public void Setup()
 	{
-		RegistryHelper.Import(@"Resources/Kinds.reg");
+		SharedTools.Import(@"Resources/Kinds.reg");
 	}
 
 	[TestCleanup]

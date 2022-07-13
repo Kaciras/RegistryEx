@@ -6,11 +6,12 @@ public sealed class RegFileReaderTest
 	[TestMethod]
 	public void ReadKey()
 	{
-		var reader = new RegFileReader(Resources.ImportTest);
+		var reader = new RegFileReader(Resources.SubKey);
 
 		Assert.IsTrue(reader.Read());
+		Assert.IsTrue(reader.Read());
 		Assert.IsTrue(reader.IsKey);
-		Assert.AreEqual(@"HKEY_CURRENT_USER\_RH_Test_\Key", reader.Key);
+		Assert.AreEqual(@"HKEY_CURRENT_USER\_RH_Test_", reader.Key);
 	}
 
 	[TestMethod]

@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace RegistryEx.Test;
+﻿namespace RegistryEx.Test;
 
 [TestClass]
 public sealed class RegFileWriterTest

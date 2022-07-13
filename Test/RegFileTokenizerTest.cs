@@ -95,7 +95,7 @@ public sealed class RegFileTokenizerTest
 
 		Assert.IsTrue(tokenizer.Read());
 		Assert.AreEqual(RegTokenType.Comment, tokenizer.TokenType);
-		Assert.AreEqual("测试多行 + 注释", tokenizer.Value);
+		Assert.AreEqual("Comment at end", tokenizer.Value);
 
 		Assert.IsTrue(tokenizer.Read());
 		Assert.AreEqual(RegTokenType.ValuePart, tokenizer.TokenType);
@@ -103,7 +103,7 @@ public sealed class RegFileTokenizerTest
 
 		Assert.IsTrue(tokenizer.Read());
 		Assert.AreEqual(RegTokenType.Comment, tokenizer.TokenType);
-		Assert.AreEqual("注释在值内占一行", tokenizer.Value);
+		Assert.AreEqual("Comment line inside the value", tokenizer.Value);
 
 		Assert.IsTrue(tokenizer.Read());
 		Assert.AreEqual(RegTokenType.ValuePart, tokenizer.TokenType);

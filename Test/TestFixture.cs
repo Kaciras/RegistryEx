@@ -6,7 +6,7 @@ internal readonly struct TestFixture : IDisposable
 
 	private TestFixture(string file)
 	{
-		RegistryHelper.Import(@$"Resources\{file}.reg");
+		SharedTools.Import(@$"Resources\{file}.reg");
 	}
 
 	public void Dispose()
