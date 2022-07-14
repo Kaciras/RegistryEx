@@ -4,6 +4,28 @@ namespace RegistryEx.Test;
 [TestClass]
 public class RegDocumentTest
 {
+	[ExpectedException(typeof(ArgumentException))]
+	[DataRow(@"foobar")]
+	[DataRow(@"")]
+	[DataRow(@"\")]
+	[DataRow(@"\HKCU\foobar")]
+	[DataRow(@"HKCU\foobar\")]
+	[DataRow(@"HKCU\\foobar")]
+	[DataTestMethod]
+	public void CheckKeyName(string name)
+	{
+		new RegDocument().CreateKey(name);
+	}
+
+	[TestMethod]
+	public void NormalizeKeyName()
+	{
+		var doc = new RegDocument();
+		doc.CreateKey(@"HKEY_CURRENT_USER\_RH_Test_");
+		doc.DeleteKey(@"HKCU\_rh_tEST_");
+		Assert.AreEqual(0, doc.Created.Count);
+	}
+
 	[TestMethod]
 	public void ParseFile()
 	{

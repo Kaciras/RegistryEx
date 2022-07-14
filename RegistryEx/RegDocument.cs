@@ -18,11 +18,7 @@ public class RegDocument
 
 	public void DeleteKey(string name)
 	{
-		var s = name.IndexOf('\\') + 1;
-		if (s == 0 || s == name.Length)
-		{
-			throw new ArgumentException("Can not delete root key");
-		}
+		name = Normalize(name, true);
 
 		Erased.Add(name);
 
@@ -45,16 +41,59 @@ public class RegDocument
 
 	public void DeleteOldTree(string name)
 	{
-		Erased.Add(name);
+		Erased.Add(Normalize(name, true));
 	}
 
 	public ValueDict CreateKey(string name)
 	{
+		name = Normalize(name, false);
 		if (Created.TryGetValue(name, out var existing))
 		{
 			return existing;
 		}
 		return Created[name] = new(StringComparer.OrdinalIgnoreCase);
+	}
+
+	string Normalize(string name, bool disallowRoot)
+	{
+		// Key name cannot start or end with \
+		if (name.Length == 0 || name[name.Length - 1] == '\\')
+		{
+			throw new ArgumentException($"Invalid key name: {name}");
+		}
+
+		var slash = name.IndexOf('\\');
+		var i = slash;
+		var root = name;
+
+		// Key name cannot have consecutive slashs
+		while (i != -1)
+		{
+			if (name[slash + 1] == '\\')
+			{
+				throw new ArgumentException($"Invalid key name: {name}");
+			}
+			i = name.IndexOf('\\', i + 1);
+		}
+
+		if (slash != -1)
+		{
+			root = name.Substring(0, slash);		
+		}
+		else if (disallowRoot)
+		{
+			throw new ArgumentException("Can not delete root key");
+		}
+
+		// Check root key is valid
+		var rootKey = RegistryHelper.GetBaseKey(root);
+		if (rootKey == null)
+		{
+			throw new ArgumentException($"Unknown root key: {root}");
+		}
+
+		// Convert root key alias to full name
+		return $@"{rootKey.Name}\{name.Substring(slash + 1)}";
 	}
 
 	/// <summary>
@@ -111,7 +150,9 @@ public class RegDocument
 		{
 			var dict = CreateKey(k);
 			foreach (var (n, v) in d)
+			{
 				dict[n] = v;
+			}
 		}
 	}
 
