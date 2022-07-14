@@ -12,9 +12,9 @@ public class RegDocument
 {
 	internal const string VER_LINE = "Windows Registry Editor Version 5.00";
 
-	public HashSet<string> Erased { get; } = new();
+	public HashSet<string> Erased { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-	public Dictionary<string, ValueDict> Created { get; } = new();
+	public Dictionary<string, ValueDict> Created { get; } = new(StringComparer.OrdinalIgnoreCase);
 
 	public void DeleteKey(string name)
 	{
@@ -29,7 +29,7 @@ public class RegDocument
 		var removed = new List<string>();
 		foreach (var existing in Created.Keys)
 		{
-			if (!existing.StartsWith(name))
+			if (!existing.StartsWith(name, StringComparison.OrdinalIgnoreCase))
 			{
 				continue;
 			}
@@ -50,16 +50,11 @@ public class RegDocument
 
 	public ValueDict CreateKey(string name)
 	{
-		if (Created.TryGetValue(name, out var e))
+		if (Created.TryGetValue(name, out var existing))
 		{
-			return e;
+			return existing;
 		}
-		return Created[name] = new ValueDict();
-	}
-
-	string Normalize(string name)
-	{
-		return name;
+		return Created[name] = new(StringComparer.OrdinalIgnoreCase);
 	}
 
 	/// <summary>
@@ -115,7 +110,7 @@ public class RegDocument
 		foreach (var (k, d) in other.Created)
 		{
 			var dict = CreateKey(k);
-			foreach (var (n, v) in d) 
+			foreach (var (n, v) in d)
 				dict[n] = v;
 		}
 	}
