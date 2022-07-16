@@ -27,6 +27,15 @@ public class RegDocumentTest
 	}
 
 	[TestMethod]
+	public void NoTrailingSlashOnBasekey()
+	{
+		var doc = new RegDocument();
+		doc.CreateKey(@"HKCU");
+
+		Assert.IsTrue(doc.Created.ContainsKey("HKEY_CURRENT_USER"));
+	}
+
+	[TestMethod]
 	public void ParseFile()
 	{
 		var doc = RegDocument.ParseFile(@"Resources/Kinds.reg");
@@ -62,7 +71,7 @@ public class RegDocumentTest
 		var doc = new RegDocument();
 
 		using var key = Registry.CurrentUser.OpenSubKey("_RH_Test_");
-		doc.LoadRegistry(key!);
+		doc.Load(key!);
 
 		Assert.AreEqual(2, doc.Created.Count);
 		Assert.AreEqual(

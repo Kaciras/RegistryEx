@@ -86,14 +86,18 @@ public class RegDocument
 		}
 
 		// Check root key is valid
-		var rootKey = RegistryHelper.GetBaseKey(root);
-		if (rootKey == null)
+		var basekey = RegistryHelper.GetBaseKey(root);
+		if (basekey == null)
 		{
 			throw new ArgumentException($"Unknown root key: {root}");
 		}
 
-		// Convert root key alias to full name
-		return $@"{rootKey.Name}\{name.Substring(slash + 1)}";
+		// Convert basekey alias to full name
+		if (slash == -1)
+		{
+			return basekey.Name;
+		}
+		return $@"{basekey.Name}\{name.Substring(slash + 1)}";
 	}
 
 	/// <summary>
@@ -125,12 +129,12 @@ public class RegDocument
 		}
 	}
 
-	public void LoadRegistry(RegistryKey key)
+	public void Load(RegistryKey key)
 	{
 		foreach (var name in key.GetSubKeyNames())
 		{
 			using var subKey = key.OpenSubKey(name);
-			LoadRegistry(subKey!);
+			Load(subKey!);
 		}
 
 		var dict = CreateKey(key.Name);
@@ -140,7 +144,7 @@ public class RegDocument
 		}
 	}
 
-	public void Merge(RegDocument other)
+	public void Load(RegDocument other)
 	{
 		foreach (var item in other.Erased)
 		{
@@ -148,11 +152,7 @@ public class RegDocument
 		}
 		foreach (var (k, d) in other.Created)
 		{
-			var dict = CreateKey(k);
-			foreach (var (n, v) in d)
-			{
-				dict[n] = v;
-			}
+			CreateKey(k).AddAll(d);
 		}
 	}
 
@@ -161,7 +161,7 @@ public class RegDocument
 		foreach (var name in other.Erased)
 		{
 			using var key = RegistryHelper.OpenKey(name);
-			LoadRegistry(key!);
+			Load(key!);
 		}
 		foreach (var (name, dict) in other.Created)
 		{
@@ -215,20 +215,29 @@ public class RegDocument
 				return false;
 			}
 		}
-		return erased
-			.Select(RegistryHelper.KeyExists)
-			.All(e => !e);
+		return erased.Select(RegistryHelper.KeyExists).All(e => !e);
 	}
 
 	public void Import()
 	{
 		foreach (var keyName in Erased)
 		{
-			// delete key tree
+			RegistryHelper.DeleteKeyTree(keyName);
 		}
 		foreach (var (k, d) in Created)
 		{
-			
+			using var key = RegistryHelper.CreateKey(k);
+			foreach (var (n, v) in d)
+			{
+				if (v.IsDelete)
+				{
+					key.DeleteValue(n);
+				}
+				else
+				{
+					key.SetValue(n, v.Value, v.Kind);
+				}
+			}
 		}
 	}
 
