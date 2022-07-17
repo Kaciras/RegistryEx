@@ -1,6 +1,8 @@
-﻿using System.Security;
+﻿using System.Reflection;
+using System.Security;
 using System.Security.AccessControl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Win32;
 
 namespace RegistryEx.Test;
 
@@ -11,15 +13,168 @@ public sealed class RegHelperTest
 	public void Cleanup()
 	{
 		Registry.CurrentUser.DeleteSubKeyTree("_RH_Test_", false);
-		Registry.CurrentUser.DeleteSubKeyTree("_Test_AutoConvert", false);
 	}
 
-	[DataRow(@"INVALID\Sub")]
-	[DataRow(@"INVALID")]
+	[DataRow("OpenKey", @"INVALID_ROOT\foobar", false)]
+	[DataRow("KeyExists", @"INVALID_ROOT\foobar")]
+	[DataRow("CreateKey", @"INVALID_ROOT\foobar")]
+	[DataRow("DeleteKeyTree", @"INVALID_ROOT\foobar", false)]
+	[DataRow("SetValue", @"INVALID_ROOT\foobar", 11, RegistryValueKind.DWord)]
+	[DataRow("GetValue", @"INVALID_ROOT\foobar", 11)]
+	[DataRow("GetValueKind", @"INVALID_ROOT\foobar")]
+	[DataRow("DeleteValue", @"INVALID_ROOT\foobar", false)]
+	[ExpectedException(typeof(ArgumentException))]
 	[DataTestMethod]
-	public void OpenKeyNonExists(string path)
+	public void InvalidBasekey(string method, params object[] args)
 	{
-		Assert.IsNull(RegistryHelper.OpenKey(path));
+		var types = args.Select(v => v.GetType()).ToArray();
+		var m = typeof(RegistryHelper).GetMethod(method, types);
+		Assert.IsNotNull(m);
+
+		try
+		{
+			m.Invoke(null, args);
+		}
+		catch (TargetInvocationException e)
+		{
+			throw e.InnerException!;
+		}
+	}
+
+	[TestMethod]
+	public void OpenKeyNonExists()
+	{
+		Assert.IsNull(RegistryHelper.OpenKey(@"HKCU\_NOE_\_NOE_"));
+	}
+
+	[DataRow(@"HKEY_CURRENT_USER", "HKEY_CURRENT_USER")]
+	[DataRow(@"HKCU", "HKEY_CURRENT_USER")]
+	[DataRow(@"HKCU\Software", @"HKEY_CURRENT_USER\Software")]
+	[DataTestMethod]
+	public void OpenKey(string path, string keyName)
+	{
+		using var key = RegistryHelper.OpenKey(path);
+		Assert.AreEqual(keyName, key?.Name);
+	}
+
+	[DataRow(@"HKCU\_RH_Test_", false)]
+	[DataRow(@"HKCC\System", true)]
+	[DataTestMethod]
+	public void KeyExists(string path, bool expected)
+	{
+		Assert.AreEqual(expected, RegistryHelper.KeyExists(path));
+	}
+
+	[TestMethod]
+	public void CreateKey()
+	{
+		using var created = RegistryHelper.CreateKey(@"HKCU\_RH_Test_");
+		using var key = Registry.CurrentUser.OpenSubKey("_RH_Test_");
+
+		Assert.IsNotNull(key);
+		Assert.AreEqual(created.Name, key.Name);
+	}
+
+	[TestMethod]
+	public void DeleteKeyTree()
+	{
+		using var _ = TestFixture.Import("SubKey");
+
+		RegistryHelper.DeleteKeyTree(@"HKCU\_RH_Test_");
+		Assert.IsNull(Registry.CurrentUser.OpenSubKey("_RH_Test_"));
+
+		RegistryHelper.DeleteKeyTree(@"HKCU\_RH_Test_", false);
+	}
+
+	[ExpectedException(typeof(ArgumentException))]
+	[TestMethod]
+	public void DeleteNonExistsKeyTree()
+	{
+		RegistryHelper.DeleteKeyTree(@"HKCU\_RH_Test_");
+	}
+
+	[TestMethod]
+	public void DeleteIgnoreNonExistsKeyTree()
+	{
+		RegistryHelper.DeleteKeyTree(@"HKCU\_RH_Test_", false);
+	}
+
+	[TestMethod]
+	public void SetValue()
+	{
+		using var key = Registry.CurrentUser.CreateSubKey("_RH_Test_");
+		RegistryHelper.SetValue(@"HKCU\_RH_Test_\", 123, RegistryValueKind.QWord);
+		Assert.AreEqual(123L, key.GetValue(""));
+	}
+
+	[TestMethod]
+	public void SetValueAutoCreateKey()
+	{
+		RegistryHelper.SetValue(@"HKCU\_RH_Test_\Sub\", 123, RegistryValueKind.QWord);
+		Assert.AreEqual(123L, Registry.GetValue(@"HKEY_CURRENT_USER\_RH_Test_\Sub", "", null));
+	}
+
+	[DataRow(@"HKCU\_NOE_\name")]
+	[DataRow(@"HKCU\")]
+	[DataRow(@"HKCU\name")]
+	[DataTestMethod]
+	public void GetNonExistsValue(string path)
+	{
+		Assert.IsNull(RegistryHelper.GetValue(path));
+	}
+
+	[TestMethod]
+	public void GetValue()
+	{
+		using var _ = TestFixture.Import("Kinds");
+		Assert.AreEqual("文字文字", RegistryHelper.GetValue(@"HKCU\_RH_Test_\"));
+		Assert.AreEqual(0x123, RegistryHelper.GetValue(@"HKCU\_RH_Test_\Dword"));
+	}
+
+	[TestMethod]
+	public void GetValueWithOptions()
+	{
+		using var _ = TestFixture.Import("Kinds");
+		var got = RegistryHelper.GetValue(@"HKCU\_RH_Test_\Expand", RegistryValueOptions.DoNotExpandEnvironmentNames);
+		Assert.AreEqual("%USERPROFILE%", got);
+	}
+
+	[DataRow(@"HKCU\_NOE_KEY_\Noe_Value")]
+	[DataRow(@"HKCU\")]
+	[DataRow(@"HKCU\Noe_Value")]
+	[ExpectedException(typeof(IOException))]
+	[DataTestMethod]
+	public void GetNonExistValueKind(string path)
+	{
+		RegistryHelper.GetValueKind(path);
+	}
+
+	[DataRow(@"HKCU\_RH_Test_\", RegistryValueKind.String)]
+	[DataRow(@"HKCU\_RH_Test_\None", RegistryValueKind.None)]
+	[DataTestMethod]
+	public void GetValueKind(string path, RegistryValueKind expected)
+	{
+		using var _ = TestFixture.Import("Kinds");
+		Assert.AreEqual(expected, RegistryHelper.GetValueKind(path));
+	}
+
+	[DataRow(@"HKCU\_NOE_KEY_\")]
+	[DataRow(@"HKCU\Noe_Value")]
+	[ExpectedException(typeof(IOException))]
+	[DataTestMethod]
+	public void DeleteNonExistValue(string path)
+	{
+		RegistryHelper.DeleteValue(path);
+	}
+
+	[TestMethod]
+	public void DeleteValue()
+	{
+		using var _ = TestFixture.Import("Kinds");
+		RegistryHelper.DeleteValue(@"HKCU\_RH_Test_\");
+
+		using var key = Registry.CurrentUser.OpenSubKey("_RH_Test_");
+		Assert.IsNull(key!.GetValue(""));
 	}
 
 	[ExpectedException(typeof(DirectoryNotFoundException))]
@@ -34,22 +189,6 @@ public sealed class RegHelperTest
 	{
 		var value = RegistryHelper.GetCLSIDValue("{C7657C4A-9F68-40fa-A4DF-96BC08EB3551}");
 		Assert.AreEqual("Photo Thumbnail Provider", value);
-	}
-
-	[DataRow(@"INVALID\Sub", false)]
-	[DataRow(@"INVALID", false)]
-	[DataRow(@"HKCC\System", true)]
-	[DataTestMethod]
-	public void KeyExists(string path, bool expected)
-	{
-		Assert.AreEqual(expected, RegistryHelper.KeyExists(path));
-	}
-
-	[TestMethod]
-	public void ContainsSubKey()
-	{
-		Assert.IsTrue(Registry.LocalMachine.ContainsSubKey(@"SOFTWARE\Microsoft"));
-		Assert.IsFalse(Registry.LocalMachine.ContainsSubKey(@"SOFTWARE\Xicrosoft"));
 	}
 
 	[ExpectedException(typeof(IOException))]
@@ -71,7 +210,7 @@ public sealed class RegHelperTest
 
 		static void OpenWrite()
 		{
-			Registry.CurrentUser.OpenSubKey("_test_sec_0", true).Dispose();
+			Registry.CurrentUser.OpenSubKey("_test_sec_0", true)!.Dispose();
 		}
 
 		Assert.ThrowsException<SecurityException>(OpenWrite);
@@ -84,18 +223,5 @@ public sealed class RegHelperTest
 		security.SetAccessRuleProtection(false, true);
 		key.SetAccessControl(security);
 		Registry.CurrentUser.DeleteSubKey("_test_sec_0");
-	}
-
-	/// <summary>
-	/// 验证 Registry.SetValue() 无法直接接受 .reg 文件里的值格式，必须要先转换。
-	/// </summary>
-	[ExpectedException(typeof(ArgumentException))]
-	[TestMethod]
-	public void AutoConvertOnSetValue()
-	{
-		var key = @"HKEY_CURRENT_USER\_Test_AutoConvert";
-		var text = "50,2d,02,09,60,d1,d6,01";
-		var kind = RegistryValueKind.QWord;
-		Registry.SetValue(key, "name", text, kind);
 	}
 }
