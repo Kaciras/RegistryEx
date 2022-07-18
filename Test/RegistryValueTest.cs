@@ -47,10 +47,19 @@ public sealed class RegistryValueTest
 		}
 	}
 
+	[TestMethod]
+	public void EqualityDefferentType()
+	{
+		var value = new RegistryValue(0, RegistryValueKind.DWord);
+		Assert.AreNotEqual(value, "");
+		Assert.AreNotEqual(value.GetHashCode(), "".GetHashCode());
+	}
+
 	[DynamicData(nameof(EqualValues), DynamicDataSourceType.Method)]
 	[DataTestMethod]
 	public void Equality0(RegistryValue a, RegistryValue b)
 	{
+		Assert.AreEqual<object>(a, b);
 		Assert.AreEqual(a, b);
 		Assert.AreEqual(a.GetHashCode(), b.GetHashCode());
 	}
@@ -59,6 +68,7 @@ public sealed class RegistryValueTest
 	[DataTestMethod]
 	public void Equality1(RegistryValue a, RegistryValue b)
 	{
+		Assert.AreNotEqual<object>(a, b);
 		Assert.AreNotEqual(a, b);
 		Assert.AreNotEqual(a.GetHashCode(), b.GetHashCode());
 	}

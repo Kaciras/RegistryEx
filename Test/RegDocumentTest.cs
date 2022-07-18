@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-namespace RegistryEx.Test;
+﻿namespace RegistryEx.Test;
 
 [TestClass]
 public class RegDocumentTest
@@ -30,6 +29,19 @@ public class RegDocumentTest
 		doc.CreateKey(@"HKEY_CURRENT_USER\_RH_Test_");
 		doc.DeleteKey(@"HKCU\_rh_tEST_");
 		Assert.AreEqual(0, doc.Created.Count);
+	}
+
+	[TestMethod]
+	public void CreateKey()
+	{
+		var doc = new RegDocument();
+		var a = doc.CreateKey(@"HKEY_CURRENT_USER\_RH_Test_");
+		var b = doc.CreateKey(@"HKCU\_RH_Test_");
+		var c = doc.CreateKey(@"HKCU\_rh_tEST_");
+
+		Assert.AreSame(a, b);
+		Assert.AreSame(b, c);
+		Assert.AreEqual(1, doc.Created.Count);
 	}
 
 	[TestMethod]

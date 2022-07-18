@@ -167,6 +167,11 @@ public sealed class RegHelperTest
 		RegistryHelper.DeleteValue(path);
 	}
 
+	public void DeleteNonExistValueNotThrow()
+	{
+		RegistryHelper.DeleteValue(@"HKCU\_NOE_KEY_\", false);
+	}
+
 	[TestMethod]
 	public void DeleteValue()
 	{
