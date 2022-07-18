@@ -191,38 +191,52 @@ public class RegDocument
 		return restoration;
 	}
 
-	public bool IsSuitable()
+	public bool IsSuitable
 	{
-		var erased = new HashSet<string>(Erased);
-		foreach (var (k, d) in Created)
+		get
 		{
-			var key = RegistryHelper.OpenKey(k);
-			if (key == null)
+			var erased = new HashSet<string>(Erased, Erased.Comparer);
+			foreach (var (k, d) in Created)
 			{
-				return false;
-			}
-
-			foreach (var (n, e) in d)
-			{
-				if (!e.Equals(RegistryValue.From(key, n)))
+				var key = RegistryHelper.OpenKey(k);
+				if (key == null)
 				{
 					return false;
 				}
-			}
 
-			if (erased.Remove(k) && key.ValueCount != d.Count)
-			{
-				return false;
+				foreach (var (n, e) in d)
+				{
+					if (!e.Equals(RegistryValue.From(key, n)))
+					{
+						return false;
+					}
+				}
+
+				if (erased.Remove(k))
+				{
+					if (key.ValueCount != d.Count)
+					{
+						return false;
+					}
+
+					foreach (var s in key.GetSubKeyNames())
+					{
+						if (!Created.ContainsKey($@"{k}\{s}"))
+						{
+							return false;
+						}
+					}
+				}
 			}
+			return !erased.Any(RegistryHelper.KeyExists);
 		}
-		return erased.Select(RegistryHelper.KeyExists).All(e => !e);
 	}
 
 	public void Import()
 	{
 		foreach (var keyName in Erased)
 		{
-			RegistryHelper.DeleteKeyTree(keyName);
+			RegistryHelper.DeleteKeyTree(keyName, false);
 		}
 		foreach (var (k, d) in Created)
 		{
@@ -231,7 +245,7 @@ public class RegDocument
 			{
 				if (v.IsDelete)
 				{
-					key.DeleteValue(n);
+					key.DeleteValue(n, false);
 				}
 				else
 				{

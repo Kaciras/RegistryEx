@@ -31,7 +31,6 @@ public class RegDocumentTest
 	{
 		var doc = new RegDocument();
 		doc.CreateKey(@"HKCU");
-
 		Assert.IsTrue(doc.Created.ContainsKey("HKEY_CURRENT_USER"));
 	}
 
@@ -61,7 +60,24 @@ public class RegDocumentTest
 	{
 		var doc = new RegDocument();
 		doc.Load(Resources.Redundant);
-		Assert.AreEqual(1, doc.Created.Count);
+		Assert.AreEqual(2, doc.Created.Count);
+	}
+
+	[TestMethod]
+	public void IsSuitable()
+	{
+		var doc = new RegDocument();
+		Assert.IsTrue(doc.IsSuitable);
+
+		doc.Load(Resources.Redundant);
+		Assert.IsFalse(doc.IsSuitable);
+
+		using var _ = TestFixture.Import("SubKey");
+		Assert.IsTrue(doc.IsSuitable);
+
+		using var key = Registry.CurrentUser.CreateSubKey(@"_RH_Test_\11");
+		key.SetValue("foo", "bar");
+		Assert.IsFalse(doc.IsSuitable);
 	}
 
 	[TestMethod]
@@ -85,6 +101,20 @@ public class RegDocumentTest
 	}
 
 	[TestMethod]
+	public void CreateRestorePoint()
+	{
+		using var _ = TestFixture.Import("SubKey");
+
+		var doc = new RegDocument();
+		doc.DeleteKey(@"HKEY_CURRENT_USER\_RH_Test_");
+
+		doc.CreateKey(@"HKEY_CURRENT_USER\_SomeKey_");
+
+		var reverse = doc.CreateRestorePoint();
+		Assert.AreEqual(1, reverse.Erased.Count);
+	}
+
+	[TestMethod]
 	public void Write()
 	{
 		var doc = new RegDocument();
@@ -99,19 +129,5 @@ public class RegDocumentTest
 		key2[""] = new RegistryValue(0x123, RegistryValueKind.QWord);
 
 		Snapshots.AssertMatchRegDocument(doc);
-	}
-
-	[TestMethod]
-	public void CreateRestorePoint()
-	{
-		using var _ = TestFixture.Import("SubKey");
-
-		var doc = new RegDocument();
-		doc.DeleteKey(@"HKEY_CURRENT_USER\_RH_Test_");
-
-		doc.CreateKey(@"HKEY_CURRENT_USER\_SomeKey_");
-
-		var reverse = doc.CreateRestorePoint();
-		Assert.AreEqual(1, reverse.Erased.Count);
 	}
 }
