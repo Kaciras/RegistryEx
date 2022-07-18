@@ -78,7 +78,7 @@ public sealed class RegHelperTest
 	[TestMethod]
 	public void DeleteKeyTree()
 	{
-		using var _ = TestFixture.Import("SubKey");
+		TestFixture.Import("SubKey");
 
 		RegistryHelper.DeleteKeyTree(@"HKCU\_RH_Test_");
 		Assert.IsNull(Registry.CurrentUser.OpenSubKey("_RH_Test_"));
@@ -126,7 +126,7 @@ public sealed class RegHelperTest
 	[TestMethod]
 	public void GetValue()
 	{
-		using var _ = TestFixture.Import("Kinds");
+		TestFixture.Import("Kinds");
 		Assert.AreEqual("文字文字", RegistryHelper.GetValue(@"HKCU\_RH_Test_\"));
 		Assert.AreEqual(0x123, RegistryHelper.GetValue(@"HKCU\_RH_Test_\Dword"));
 	}
@@ -134,7 +134,7 @@ public sealed class RegHelperTest
 	[TestMethod]
 	public void GetValueWithOptions()
 	{
-		using var _ = TestFixture.Import("Kinds");
+		TestFixture.Import("Kinds");
 		var got = RegistryHelper.GetValue(@"HKCU\_RH_Test_\Expand", RegistryValueOptions.DoNotExpandEnvironmentNames);
 		Assert.AreEqual("%USERPROFILE%", got);
 	}
@@ -154,7 +154,7 @@ public sealed class RegHelperTest
 	[DataTestMethod]
 	public void GetValueKind(string path, RegistryValueKind expected)
 	{
-		using var _ = TestFixture.Import("Kinds");
+		TestFixture.Import("Kinds");
 		Assert.AreEqual(expected, RegistryHelper.GetValueKind(path));
 	}
 
@@ -170,7 +170,7 @@ public sealed class RegHelperTest
 	[TestMethod]
 	public void DeleteValue()
 	{
-		using var _ = TestFixture.Import("Kinds");
+		TestFixture.Import("Kinds");
 		RegistryHelper.DeleteValue(@"HKCU\_RH_Test_\");
 
 		using var key = Registry.CurrentUser.OpenSubKey("_RH_Test_");

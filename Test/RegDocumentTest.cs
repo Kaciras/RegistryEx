@@ -4,6 +4,12 @@ namespace RegistryEx.Test;
 [TestClass]
 public class RegDocumentTest
 {
+	[TestCleanup]
+	public void Cleanup()
+	{
+		Registry.CurrentUser.DeleteSubKeyTree("_RH_Test_", false);
+	}
+
 	[ExpectedException(typeof(ArgumentException))]
 	[DataRow(@"foobar")]
 	[DataRow(@"")]
@@ -72,7 +78,7 @@ public class RegDocumentTest
 		doc.Load(Resources.Redundant);
 		Assert.IsFalse(doc.IsSuitable);
 
-		using var _ = TestFixture.Import("SubKey");
+		TestFixture.Import("SubKey");
 		Assert.IsTrue(doc.IsSuitable);
 
 		using var key = Registry.CurrentUser.CreateSubKey(@"_RH_Test_\11");
@@ -83,7 +89,7 @@ public class RegDocumentTest
 	[TestMethod]
 	public void LoadRegistry()
 	{
-		using var _ = TestFixture.Import("SubKey");
+		TestFixture.Import("SubKey");
 		var doc = new RegDocument();
 
 		using var key = Registry.CurrentUser.OpenSubKey("_RH_Test_");
@@ -103,7 +109,7 @@ public class RegDocumentTest
 	[TestMethod]
 	public void CreateRestorePoint()
 	{
-		using var _ = TestFixture.Import("SubKey");
+		TestFixture.Import("SubKey");
 
 		var doc = new RegDocument();
 		doc.DeleteKey(@"HKEY_CURRENT_USER\_RH_Test_");
