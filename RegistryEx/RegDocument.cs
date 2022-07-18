@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Microsoft.Win32;
 
 namespace RegistryEx;
@@ -98,6 +99,11 @@ public class RegDocument
 			return basekey.Name;
 		}
 		return $@"{basekey.Name}\{name.Substring(slash + 1)}";
+	}
+
+	public void LoadFile(string path)
+	{
+		Load(File.ReadAllText(path, Encoding.Unicode));
 	}
 
 	/// <summary>

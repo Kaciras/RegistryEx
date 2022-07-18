@@ -1,5 +1,5 @@
 ﻿using BenchmarkDotNet.Running;
 using RegistryEx.Benchmark;
 
-BenchmarkRunner.Run<RegFileWriterPerf>();
+BenchmarkRunner.Run<ImportRegFile>();
 Console.ReadKey();

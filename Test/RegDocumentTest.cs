@@ -115,6 +115,18 @@ public class RegDocumentTest
 	}
 
 	[TestMethod]
+	public void Import()
+	{
+		var doc = new RegDocument();
+		doc.Load(Resources.SubKey);
+		doc.Import();
+
+		var doc2 = new RegDocument();
+		doc.Load(Resources.SubKey);
+		Assert.IsTrue(doc2.IsSuitable);
+	}
+
+	[TestMethod]
 	public void Write()
 	{
 		var doc = new RegDocument();
