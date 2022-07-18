@@ -68,6 +68,7 @@ public sealed class RegFileWriterTest
 			writer.SetValue("Expand", "%windir%", RegistryValueKind.ExpandString);
 			writer.SetValue("QWord", 1, RegistryValueKind.QWord);
 			writer.SetValue("None", new byte[50], RegistryValueKind.None);
+			writer.SetValue("Binary", Array.Empty<byte>(), RegistryValueKind.Binary);
 		}
 		Snapshots.AssertMatchRegFile(stream);
 	}

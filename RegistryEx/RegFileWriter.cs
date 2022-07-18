@@ -10,6 +10,7 @@ namespace RegistryEx;
 /// <summary>
 /// Writer for Registration Entries (.reg) file.
 /// </summary>
+/// <see href="https://docs.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types"/>
 public readonly struct RegFileWriter : IDisposable
 {
 	private static readonly char[] Escape = { '"', '\\' };
@@ -148,8 +149,11 @@ public readonly struct RegFileWriter : IDisposable
 
 	void WriteBinaryLine(IEnumerable<string> value)
 	{
-		value = value.Where(s => s.Length > 0);
-		WriteBinaryLine(string.Join("\0", value));
+		value = value
+			.Where(s => s.Length > 0)
+			.Select(s => s + "\0");
+
+		WriteBinaryLine(string.Join("", value) + "\0");
 	}
 
 	void WriteBinaryLine(string value)
@@ -167,6 +171,7 @@ public readonly struct RegFileWriter : IDisposable
 	{
 		if (bytes.Length == 0)
 		{
+			writer.WriteLine();
 			return;
 		}
 
