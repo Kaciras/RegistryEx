@@ -51,23 +51,14 @@ static class TokenManipulator
 	{
 		var hproc = GetCurrentProcess();
 		var htok = IntPtr.Zero;
-		Check(OpenProcessToken(hproc, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, ref htok));
+		Interop.Check(OpenProcessToken(hproc, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, ref htok));
 
 		TokPriv1Luid tp;
 		tp.Count = 1;
 		tp.Luid = 0;
 		tp.Attributes = attr;
 
-		Check(LookupPrivilegeValue(null, privilege, ref tp.Luid));
-		Check(AdjustTokenPrivileges(htok, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero));
-	}
-
-	static void Check(bool @return)
-	{
-		if (!@return)
-		{
-			var code = Marshal.GetLastWin32Error();
-			throw new SystemException($"Win32 API throws an error: {code}");
-		}
+		Interop.Check(LookupPrivilegeValue(null, privilege, ref tp.Luid));
+		Interop.Check(AdjustTokenPrivileges(htok, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero));
 	}
 }

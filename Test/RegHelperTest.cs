@@ -198,6 +198,28 @@ public sealed class RegHelperTest
 
 	[ExpectedException(typeof(IOException))]
 	[TestMethod]
+	public void LoadAppHiveLocked()
+	{
+		using var key = RegistryHelper.LoadAppHive("LoadTest.hiv", RegistryRights.FullControl, true);
+		using var never = RegistryHelper.LoadAppHive("LoadTest.hiv", RegistryRights.FullControl, true);
+	}
+
+	[TestMethod]
+	public void LoadAppHive()
+	{
+		File.Copy(@"Resources/Kinds.hiv", "LoadTest.hiv", true);
+
+		using var key1 = RegistryHelper.LoadAppHive("LoadTest.hiv", RegistryRights.FullControl, false);
+		using var key2 = RegistryHelper.LoadAppHive("LoadTest.hiv", RegistryRights.FullControl, false);
+		key1.SetValue("Dword", 8964);
+		key1.SetValue("Padding", new byte[8192]);
+
+		Assert.AreEqual(8964, key2.GetValue("Dword"));
+		Assert.IsTrue(new FileInfo("LoadTest.hiv").Length > 8192);
+	}
+
+	[ExpectedException(typeof(IOException))]
+	[TestMethod]
 	public void ElevateNonExists()
 	{
 		RegistryHelper.Elevate(Registry.CurrentUser, "_NON_EXISTS");

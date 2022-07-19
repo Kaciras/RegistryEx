@@ -138,4 +138,35 @@ public sealed class RegistryKeyExtensionTest
 		HKCU.SetValue(@"_RH_Test_", "Dword", 8964);
 		Assert.AreEqual(8964, Registry.GetValue(@"HKEY_CURRENT_USER\_RH_Test_", "Dword", 0));
 	}
+
+	[TestMethod]
+	public void SaveAndRestoreHive()
+	{
+		using var key = HKCU.OpenSubKey("_RH_Test_");
+		key!.SaveHive("saved.hiv");
+
+		using var sub = HKCU.CreateSubKey(@"_RH_Test_\Restored");
+		sub!.RestoreHive(@"Resources/Kinds.hiv");
+
+		Assert.AreEqual("文字文字", sub.GetValue(""));
+	}
+
+	[TestMethod]
+	public void LoadHive()
+	{
+		File.Copy(@"Resources/Kinds.hiv", "LoadTest.hiv", true);
+
+		Registry.LocalMachine.LoadHive("_RH_Test_", "LoadTest.hiv");
+		using (var key = Registry.LocalMachine.OpenSubKey(@"_RH_Test_", true))
+		{
+			var padding = new byte[8192];
+			new Random().NextBytes(padding);
+
+			key!.SetValue("Padding", padding);
+			Assert.AreEqual("文字文字", key.GetValue(""));
+		}
+
+		Registry.LocalMachine.UnLoadHive("_RH_Test_");
+		Assert.IsTrue(new FileInfo("LoadTest.hiv").Length > 8192);
+	}
 }

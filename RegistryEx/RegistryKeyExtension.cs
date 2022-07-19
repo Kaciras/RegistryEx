@@ -62,6 +62,7 @@ public static class RegistryKeyExtension
 		throw new IOException("The specified registry key doesn't exist");
 	}
 
+	//[return: NotNullIfNotNull("defaultValue")]
 	public static T? GetValue<T>(
 		this RegistryKey key,
 		string path,
@@ -93,5 +94,58 @@ public static class RegistryKeyExtension
 	{
 		using var subKey = key.CreateSubKey(path, true);
 		subKey.SetValue(name, value);
+	}
+
+	/// <summary>
+	///		Saves the specified key and all of its subkeys and values to a registry file.
+	/// </summary>
+	/// <param name="file">
+	///		The name of the file in which the specified key and subkeys are to be saved.
+	/// </param>
+	public static void SaveHive(this RegistryKey key, string file)
+	{
+		File.Delete(file);
+		Interop.Check(Interop.RegSaveKeyEx(key.Handle, file, IntPtr.Zero, 2));
+	}
+
+	/// <summary>
+	///		Creates a subkey under HKEY_USERS or HKEY_LOCAL_MACHINE and loads the data 
+	///		from the specified registry hive into that subkey.
+	///		This function always loads information at the top of the registry hierarchy.
+	/// </summary>
+	/// <param name="subKey">
+	///		The name of the key to be created the key. This subkey is where the 
+	///		registration information from the file will be loaded.
+	/// </param>
+	/// <param name="file">
+	///		The name of the file containing the registry data. This file must be a local 
+	///		file that was created with the RegSaveKey function. 
+	///		If this file does not exist, a file is created with the specified name.
+	/// </param>
+	public static void LoadHive(this RegistryKey key, string subKey, string file)
+	{
+		Interop.Check(Interop.RegLoadKey(key.Handle, subKey, file));
+	}
+
+	/// <summary>
+	///		Unloads the specified registry key and its subkeys from the registry.
+	/// </summary>
+	/// <param name="key"></param>
+	/// <param name="subKey">The name of the subkey to be unloaded.</param>
+	public static void UnLoadHive(this RegistryKey key, string subKey)
+	{
+		Interop.Check(Interop.RegUnLoadKey(key.Handle, subKey));
+	}
+
+	/// <summary>
+	///		Reads the registry information in a specified file and copies it over the specified key. 
+	///		This registry information may be in the form of a key and multiple levels of subkeys.
+	/// </summary>
+	/// <param name="file">
+	///		The name of the file with the registry information.
+	/// </param>
+	public static void RestoreHive(this RegistryKey key, string file)
+	{
+		Interop.Check(Interop.RegRestoreKey(key.Handle, file, 0));
 	}
 }

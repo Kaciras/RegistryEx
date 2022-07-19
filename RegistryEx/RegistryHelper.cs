@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using Microsoft.Win32;
+using Microsoft.Win32.SafeHandles;
 
 [assembly: InternalsVisibleTo("Test")]
 [assembly: InternalsVisibleTo("Benchmark")]
@@ -230,6 +231,34 @@ public static class RegistryHelper
 		using var key = Registry.ClassesRoot.OpenSubKey(@"CLSID\" + clsid);
 		return (string?)key?.GetValue(string.Empty)
 			?? throw new DirectoryNotFoundException($"CLSID {clsid} is not registred");
+	}
+
+	/// <summary>
+	///	 Loads the specified registry hive as an application hive.
+	/// <br/>
+	///		Unlike RegLoadKey, RegLoadAppKey does not load the hive under HKEY_LOCAL_MACHINE or HKEY_USERS.
+	///		Instead, the hive is loaded under a special root that cannot be enumerated. 
+	///		As a result, there is no way to enumerate hives currently loaded by RegLoadAppKey. 
+	/// All operations have to be performed relative to the returned key.
+	/// <br/>
+	///		Any hive loaded using LoadAppHive is automatically unloaded when all handles to the keys 
+	///		inside the hive are closed.
+	/// </summary>
+	/// <param name="file">
+	///		The name of the hive file. If the file does not exist, 
+	///		an empty hive file is created with the specified name.
+	/// </param>
+	/// <param name="rights">
+	///		A mask that specifies the access rights requested for the returned root key.
+	/// </param>
+	/// <param name="lock">
+	///		If true, the hive cannot be loaded again while it is loaded by the caller.
+	/// </param>
+	/// <returns>The RegistryKey for the root key of the loaded hive.</returns>
+	public static RegistryKey LoadAppHive(string file, RegistryRights rights, bool @lock)
+	{
+		Interop.Check(Interop.RegLoadAppKey(file, out var handle, rights, @lock, 0));
+		return RegistryKey.FromHandle(handle);
 	}
 
 	/// <summary>
