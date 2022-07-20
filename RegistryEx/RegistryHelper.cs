@@ -17,15 +17,15 @@ public static class RegistryHelper
 	/// </summary>
 	/// <param name="name">Name or abbreviation of the basekey.</param>
 	/// <returns>The key requested, or null if it doesn't exists.</returns>
-	public static RegistryKey? GetBaseKey(string name) => name.ToUpper() switch
+	public static RegistryKey GetBaseKey(string name) => name.ToUpper() switch
 	{
 		"HKEY_CURRENT_USER" or "HKCU" => Registry.CurrentUser,
 		"HKEY_LOCAL_MACHINE" or "HKLM" => Registry.LocalMachine,
 		"HKEY_CLASSES_ROOT" or "HKCR" => Registry.ClassesRoot,
 		"HKEY_USERS" or "HKU" => Registry.Users,
 		"HKEY_CURRENT_CONFIG" or "HKCC" => Registry.CurrentConfig,
-		"HKEY_PERFORMANCE_DATA" => Registry.PerformanceData,
-		_ => null, // `HKEY_DYN_DATA => Registry.DynData` is not supported.
+		"HKEY_PERFORMANCE_DATA" or "HKPD" => Registry.PerformanceData,
+		_ => throw new ArgumentException($"Invalid basekey: {name}"),
 	};
 
 	/// <summary>
@@ -42,7 +42,7 @@ public static class RegistryHelper
 		{
 			return basekey;
 		}
-		return basekey?.OpenSubKey(subKey, wirte);
+		return basekey.OpenSubKey(subKey, wirte);
 	}
 
 	/// <summary>
@@ -95,13 +95,7 @@ public static class RegistryHelper
 			root = path.Substring(0, i);
 		}
 
-		var basekey = GetBaseKey(root);
-		if (basekey == null)
-		{
-			throw new ArgumentException($"Invalid basekey: {root}");
-		}
-
-		return (basekey, subkeyName);
+		return (GetBaseKey(root), subkeyName);
 	}
 
 	/// <summary>
@@ -212,13 +206,7 @@ public static class RegistryHelper
 			}
 		}
 
-		var basekey = GetBaseKey(root);
-		if (basekey == null)
-		{
-			throw new ArgumentException($"Invalid basekey: {root}");
-		}
-
-		return (basekey, subkeyName, valueName);
+		return (GetBaseKey(root), subkeyName, valueName);
 	}
 
 	/// <summary>

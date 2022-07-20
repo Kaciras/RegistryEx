@@ -41,6 +41,23 @@ public sealed class RegHelperTest
 		}
 	}
 
+	[DataRow("HKEY_CURRENT_USER", "HKCU", RegistryHive.CurrentUser)]
+	[DataRow("HKEY_LOCAL_MACHINE", "HKLM", RegistryHive.LocalMachine)]
+	[DataRow("HKEY_CLASSES_ROOT", "HKCR", RegistryHive.ClassesRoot)]
+	[DataRow("HKEY_USERS", "HKU", RegistryHive.Users)]
+	[DataRow("HKEY_CURRENT_CONFIG", "HKCC", RegistryHive.CurrentConfig)]
+	[DataRow("HKEY_PERFORMANCE_DATA", "HKPD", RegistryHive.PerformanceData)]
+	[DataTestMethod]
+	public void GetBaseKey(string name, string abbr, RegistryHive hive)
+	{
+		using var key0 = RegistryHelper.GetBaseKey(name);
+		using var key1 = RegistryHelper.GetBaseKey(abbr);
+		using var key2 = RegistryKey.OpenBaseKey(hive, RegistryView.Default);
+
+		Assert.AreEqual(key0.Name, key1.Name);
+		Assert.AreEqual(key1.Name, key2.Name);
+	}
+
 	[TestMethod]
 	public void OpenKeyNonExists()
 	{
