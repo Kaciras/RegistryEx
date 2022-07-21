@@ -83,17 +83,11 @@ public class RegDocument
 		}
 		else if (disallowRoot)
 		{
-			throw new ArgumentException("Can not delete root key");
-		}
-
-		// Check root key is valid
-		var basekey = RegistryHelper.GetBaseKey(root);
-		if (basekey == null)
-		{
-			throw new ArgumentException($"Unknown root key: {root}");
+			throw new ArgumentException("Can not delete basekey");
 		}
 
 		// Convert basekey alias to full name
+		var basekey = RegistryHelper.GetBaseKey(root);
 		if (slash == -1)
 		{
 			return basekey.Name;
@@ -154,7 +148,7 @@ public class RegDocument
 	{
 		foreach (var item in other.Erased)
 		{
-			Erased.Add(item);
+			DeleteKey(item);
 		}
 		foreach (var (k, d) in other.Created)
 		{
@@ -282,13 +276,14 @@ public class RegDocument
 			writer.SetKey(key);
 			foreach (var (name, item) in values)
 			{
+				var (value, kind) = item;
 				if (item.IsDelete)
 				{
 					writer.DeleteValue(name);
 				}
 				else
 				{
-					writer.SetValue(name, item.Value, item.Kind);
+					writer.SetValue(name, value, kind);
 				}
 			}
 		}

@@ -1,4 +1,5 @@
-﻿namespace RegistryEx.Test;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+namespace RegistryEx.Test;
 
 [TestClass]
 public class RegDocumentTest
@@ -59,15 +60,27 @@ public class RegDocumentTest
 		Assert.AreEqual(1, doc.Created.Count);
 	}
 
+	[ExpectedException(typeof(ArgumentException))]
+	[TestMethod]
+	public void CannotDeleteBasekey()
+	{
+		var doc = new RegDocument();
+		doc.DeleteKey("HKEY_CURRENT_USER");
+	}
+
 	[TestMethod]
 	public void DeleteKey()
 	{
 		var doc = new RegDocument();
 		doc.CreateKey(@"HKEY_CURRENT_USER\_RH_Test_\foobar");
+		doc.CreateKey(@"HKLM\_RH_Test_");
 		doc.CreateKey(@"HKEY_CURRENT_USER\_RH_Test_/foobar");
 		doc.DeleteKey(@"HKEY_CURRENT_USER\_RH_Test_");
 
-		CollectionAssert.AreEqual(new string[] { @"HKEY_CURRENT_USER\_RH_Test_/foobar" }, doc.Created.Keys);
+		CollectionAssert.AreEqual(new string[] { 
+			@"HKEY_CURRENT_USER\_RH_Test_/foobar",
+			@"HKEY_LOCAL_MECHINE\_RH_Test_" 
+		}, doc.Created.Keys);
 
 		Assert.AreEqual(1, doc.Erased.Count);
 		Assert.AreEqual(@"HKEY_CURRENT_USER\_RH_Test_", doc.Erased.First());
@@ -116,6 +129,25 @@ public class RegDocumentTest
 			new RegistryValue(0x44, RegistryValueKind.DWord),
 			doc.Created[@"HKEY_CURRENT_USER\_RH_Test_\Sub"][""]
 		);
+	}
+
+	[TestMethod]
+	public void LoadFromOther()
+	{
+		var value = new RegistryValue(11, RegistryValueKind.DWord);
+		var doc0 = new RegDocument();
+		var doc1 = new RegDocument();
+
+		doc0.CreateKey(@"HKCU\_RH_Test_\Sub");
+
+		doc1.DeleteKey(@"HKCU\_RH_Test_");
+		var key= doc1.CreateKey(@"HKCU\foobar");
+		key["Dword"] = value;
+
+		doc0.Load(doc1);
+
+		Assert.AreEqual(1, doc0.Created.Count);
+		Assert.AreEqual(value, doc0.Created[@"HKEY_CURRENT_USER\foobar"]["Dword"]);
 	}
 
 	[TestMethod]
