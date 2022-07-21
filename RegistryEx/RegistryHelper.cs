@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using Microsoft.Win32;
-using Microsoft.Win32.SafeHandles;
 
 [assembly: InternalsVisibleTo("Test")]
 [assembly: InternalsVisibleTo("Benchmark")]
@@ -255,9 +254,17 @@ public static class RegistryHelper
 	/// <see href="https://stackoverflow.com/a/38727406/7065321"></see>
 	public static void AddTokenPrivileges()
 	{
-		TokenManipulator.AddPrivilege("SeTakeOwnershipPrivilege");
-		TokenManipulator.AddPrivilege("SeBackupPrivilege");
-		TokenManipulator.AddPrivilege("SeRestorePrivilege");
+		Interop.AddPrivilege("SeTakeOwnershipPrivilege");
+		Interop.AddPrivilege("SeBackupPrivilege");
+		Interop.AddPrivilege("SeRestorePrivilege");
+	}
+
+
+	public static void RemoveTokenPrivileges()
+	{
+		Interop.RemovePrivilege("SeTakeOwnershipPrivilege");
+		Interop.RemovePrivilege("SeBackupPrivilege");
+		Interop.RemovePrivilege("SeRestorePrivilege");
 	}
 
 	/// <summary>
