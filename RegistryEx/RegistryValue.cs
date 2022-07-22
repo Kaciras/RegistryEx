@@ -20,6 +20,12 @@ public readonly struct RegistryValue : IEquatable<RegistryValue>
 		Kind = kind;
 	}
 
+	public void Deconstruct(out object value, out RegistryValueKind kind)
+	{
+		kind = Kind;
+		value = Value;
+	}
+
 	public override bool Equals(object obj)
 	{
 		return obj is RegistryValue v && Equals(v);
@@ -58,6 +64,11 @@ public readonly struct RegistryValue : IEquatable<RegistryValue>
 	int ArrayHashCode<T>(T[] values)
 	{
 		return values.Aggregate(values.Length, (s, v) => unchecked(s * 31 + v!.GetHashCode()));
+	}
+
+	public override string ToString()
+	{
+		return $"{Kind}:{Value}";
 	}
 
 	public static RegistryValue From(RegistryKey key, string name)
