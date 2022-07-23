@@ -18,6 +18,27 @@ public sealed class RegistryValueTest
 		new(Array.Empty<string>(), RegistryValueKind.MultiString),
 	};
 
+	public static IEnumerable<object?[]> InvalidConstructArgs()
+	{
+		yield return new object?[] { 123, RegistryValueKind.Unknown };
+		yield return new object?[] { DateTime.Now, RegistryValueKind.DWord };
+		yield return new object?[] { "foobar", RegistryValueKind.DWord };
+		yield return new object?[] { "", RegistryValueKind.QWord };
+		yield return new object?[] { "", RegistryValueKind.None };
+		yield return new object?[] { null, RegistryValueKind.None };
+		yield return new object?[] { "", RegistryValueKind.MultiString };
+		yield return new object?[] { null, RegistryValueKind.String };
+		yield return new object?[] { new byte[1], RegistryValueKind.MultiString };
+	}
+
+	[ExpectedException(typeof(ArgumentException))]
+	[DynamicData(nameof(InvalidConstructArgs), DynamicDataSourceType.Method)]
+	[DataTestMethod]
+	public void Construct(object value, RegistryValueKind kind)
+	{
+		new RegistryValue(value, kind);
+	}
+
 	public static IEnumerable<object[]> DifferentValues()
 	{
 		var values = new RegistryValueTest().values;

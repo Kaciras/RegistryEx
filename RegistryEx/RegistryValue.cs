@@ -1,9 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Microsoft.Win32;
 
 namespace RegistryEx;
 
+/// <summary>
+/// This struct support Equals & GetHashCode, but it is not immutatable if you construct 
+/// with a mutatable value (e.g. byte[]).
+/// </summary>
 public readonly struct RegistryValue : IEquatable<RegistryValue>
 {
 	public static readonly RegistryValue DELETED = default;
@@ -14,10 +20,46 @@ public readonly struct RegistryValue : IEquatable<RegistryValue>
 
 	public readonly RegistryValueKind Kind { get; }
 
+	[SuppressMessage("Style", "IDE0066")]
 	public RegistryValue(object value, RegistryValueKind kind)
 	{
-		Value = value;
 		Kind = kind;
+
+		// The standard library use int for DWORD and long for QWORD.
+		// https://github.com/dotnet/runtime/blob/cbfc5499e6024a0d53d7c9957c143cf45fac2987/src/libraries/Microsoft.Win32.Registry/src/Microsoft/Win32/RegistryKey.Windows.cs#L838
+		try
+		{
+			switch (kind, value)
+			{
+				case (RegistryValueKind.Unknown, _):
+					throw new ArgumentException("Unknown is not a valid registry value kind");
+				case (RegistryValueKind.Binary, byte[]):
+				case (RegistryValueKind.None, byte[]):
+				case (RegistryValueKind.MultiString, string[]):
+					Value = value;
+					break;
+				case (RegistryValueKind.ExpandString, _):
+				case (RegistryValueKind.String, _):
+					Value = value.ToString();
+					break;
+				case (RegistryValueKind.DWord, _):
+					Value = Convert.ToUInt32(value);
+					break;
+				case (RegistryValueKind.QWord, _):
+					Value = Convert.ToUInt64(value);
+					break;
+				default:
+					throw new ArgumentException("The type of the value object did not match the kind");
+			}
+		}
+		catch (FormatException)
+		{
+			throw new ArgumentException($"Cannot convert ${value} to kind: {kind}");
+		}
+		catch (Exception e) when (e is InvalidCastException || e is NullReferenceException)
+		{
+			throw new ArgumentException("The type of the value object did not match the kind");
+		}
 	}
 
 	public void Deconstruct(out object value, out RegistryValueKind kind)
