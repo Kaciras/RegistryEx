@@ -19,19 +19,14 @@ public class RegDocument
 
 	public void DeleteKey(string name)
 	{
-		name = Normalize(name, true);
+		name = RegistryHelper.Normalize(name);
 
 		Erased.Add(name);
 
 		var removed = new List<string>();
 		foreach (var existing in Created.Keys)
 		{
-			if (!existing.StartsWith(name, StringComparison.OrdinalIgnoreCase))
-			{
-				continue;
-			}
-			if (existing.Length == name.Length ||
-				existing[name.Length] == '\\')
+			if (RegistryHelper.IsSubKey(name, existing))
 			{
 				removed.Add(existing);
 			}
@@ -42,57 +37,17 @@ public class RegDocument
 
 	public void DeleteOldTree(string name)
 	{
-		Erased.Add(Normalize(name, true));
+		Erased.Add(RegistryHelper.Normalize(name));
 	}
 
 	public ValueDict CreateKey(string name)
 	{
-		name = Normalize(name, false);
+		name = RegistryHelper.Normalize(name);
 		if (Created.TryGetValue(name, out var existing))
 		{
 			return existing;
 		}
 		return Created[name] = new(StringComparer.OrdinalIgnoreCase);
-	}
-
-	string Normalize(string name, bool disallowRoot)
-	{
-		// Key name cannot start or end with \
-		if (name.Length == 0 || name[name.Length - 1] == '\\')
-		{
-			throw new ArgumentException($"Invalid key name: {name}");
-		}
-
-		var slash = name.IndexOf('\\');
-		var i = slash;
-		var root = name;
-
-		// Key name cannot have consecutive slashs
-		while (i != -1)
-		{
-			if (name[slash + 1] == '\\')
-			{
-				throw new ArgumentException($"Invalid key name: {name}");
-			}
-			i = name.IndexOf('\\', i + 1);
-		}
-
-		if (slash != -1)
-		{
-			root = name.Substring(0, slash);		
-		}
-		else if (disallowRoot)
-		{
-			throw new ArgumentException("Can not delete basekey");
-		}
-
-		// Convert basekey alias to full name
-		var basekey = RegistryHelper.GetBaseKey(root);
-		if (slash == -1)
-		{
-			return basekey.Name;
-		}
-		return $@"{basekey.Name}\{name.Substring(slash + 1)}";
 	}
 
 	public void LoadFile(string path)

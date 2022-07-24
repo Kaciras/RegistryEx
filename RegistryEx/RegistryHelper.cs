@@ -27,6 +27,51 @@ public static class RegistryHelper
 		_ => throw new ArgumentException($"Invalid basekey: {name}"),
 	};
 
+	public static string Normalize(string name)
+	{
+		// Key name cannot start or end with \
+		if (name.Length == 0 || name[name.Length - 1] == '\\')
+		{
+			throw new ArgumentException($"Invalid key name: {name}");
+		}
+
+		var slash = name.IndexOf('\\');
+		var i = slash;
+		var root = name;
+
+		// Key name cannot have consecutive slashs
+		while (i != -1)
+		{
+			if (name[slash + 1] == '\\')
+			{
+				throw new ArgumentException($"Invalid key name: {name}");
+			}
+			i = name.IndexOf('\\', i + 1);
+		}
+
+		if (slash != -1)
+		{
+			root = name.Substring(0, slash);
+		}
+
+		// Convert basekey alias to full name
+		var basekey = GetBaseKey(root);
+		if (slash == -1)
+		{
+			return basekey.Name;
+		}
+		return $@"{basekey.Name}\{name.Substring(slash + 1)}";
+	}
+
+	public static bool IsSubKey(string ancestor, string descendant)
+	{
+		if (!descendant.StartsWith(ancestor, StringComparison.OrdinalIgnoreCase))
+		{
+			return false;
+		}
+		return descendant.Length == ancestor.Length || descendant[ancestor.Length] == '\\';
+	}
+
 	/// <summary>
 	/// Retrieves a specified key, and specifies whether write access is 
 	/// to be applied to the key.
