@@ -8,6 +8,7 @@ public class RegDocumentTest
 	public void Cleanup()
 	{
 		Registry.CurrentUser.DeleteSubKeyTree("_RH_Test_", false);
+		Registry.CurrentUser.DeleteSubKeyTree("_RH_Test_2", false);
 	}
 
 	[TestMethod]
@@ -56,7 +57,10 @@ public class RegDocumentTest
 		doc.CreateKey(@"HKEY_CURRENT_USER\_RH_Test_/foobar");
 		doc.DeleteKey(@"HKEY_CURRENT_USER\_RH_Test_");
 
-		CollectionAssert.AreEqual(new string[] { @"HKEY_CURRENT_USER\_RH_Test_/foobar" }, doc.Created.Keys);
+		CollectionAssert.AreEqual(new string[] { 
+			@"HKEY_LOCAL_MACHINE\_RH_Test_",
+			@"HKEY_CURRENT_USER\_RH_Test_/foobar",
+		}, doc.Created.Keys);
 
 		Assert.AreEqual(1, doc.Erased.Count);
 		Assert.AreEqual(@"HKEY_CURRENT_USER\_RH_Test_", doc.Erased.First());
@@ -129,15 +133,20 @@ public class RegDocumentTest
 	[TestMethod]
 	public void CreateRestorePoint()
 	{
-		TestFixture.Import("SubKey");
+		TestFixture.Import("RestorePoint");
 
 		var doc = new RegDocument();
 		doc.DeleteKey(@"HKEY_CURRENT_USER\_RH_Test_");
+		doc.DeleteKey(@"HKEY_CURRENT_USER\_NOE_");
 
-		doc.CreateKey(@"HKEY_CURRENT_USER\_SomeKey_");
+		var key = doc.CreateKey(@"HKEY_CURRENT_USER\_SomeKey_");
+		key["foobar"] = new(0x123, RegistryValueKind.DWord);
 
-		var reverse = doc.CreateRestorePoint();
-		Assert.AreEqual(1, reverse.Erased.Count);
+		var key2 = doc.CreateKey(@"HKEY_CURRENT_USER\_RH_Test_2");
+		key2["NoChange"] = new("This value should not in result", RegistryValueKind.String);
+		key2["Changed"] = new(0x123, RegistryValueKind.DWord);
+
+		Snapshots.AssertMatchRegFile(doc.CreateRestorePoint());
 	}
 
 	[TestMethod]
@@ -166,6 +175,6 @@ public class RegDocumentTest
 		var key2 = doc.CreateKey(@"HKEY_CURRENT_USER\_RH_Test_\Sub");
 		key2[""] = new RegistryValue(0x123, RegistryValueKind.QWord);
 
-		Snapshots.AssertMatchRegDocument(doc);
+		Snapshots.AssertMatchRegFile(doc);
 	}
 }

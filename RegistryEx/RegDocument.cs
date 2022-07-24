@@ -99,6 +99,10 @@ public class RegDocument
 		}
 	}
 
+	/// <summary>
+	/// Merge a RegDocument object to this. after the call this document will 
+	/// </summary>
+	/// <param name="other"></param>
 	public void Load(RegDocument other)
 	{
 		foreach (var item in other.Erased)
@@ -121,7 +125,10 @@ public class RegDocument
 		foreach (var name in other.Erased)
 		{
 			using var key = RegistryHelper.OpenKey(name);
-			Load(key!);
+			if (key != null)
+			{
+				Load(key);
+			}
 		}
 		foreach (var (name, dict) in other.Created)
 		{

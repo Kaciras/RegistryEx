@@ -14,7 +14,7 @@ internal static class Snapshots
 	static MethodBase? latestMethod;
 	static int index = 0;
 
-	public static void AssertMatchRegDocument(RegDocument document)
+	public static void AssertMatchRegFile(RegDocument document)
 	{
 		var stream = new MemoryStream();
 		document.WriteTo(stream);
