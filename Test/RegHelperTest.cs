@@ -1,8 +1,6 @@
 ﻿using System.Reflection;
 using System.Security;
 using System.Security.AccessControl;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.Win32;
 
 namespace RegistryEx.Test;
 
@@ -56,6 +54,31 @@ public sealed class RegHelperTest
 
 		Assert.AreEqual(key0.Name, key1.Name);
 		Assert.AreEqual(key1.Name, key2.Name);
+	}
+
+	[ExpectedException(typeof(ArgumentException))]
+	[DataRow(@"foobar")]
+	[DataRow(@"")]
+	[DataRow(@"\")]
+	[DataRow(@"\HKCU\foobar")]
+	[DataRow(@"HKCU\foobar\")]
+	[DataRow(@"HKCU\\foobar")]
+	[DataTestMethod]
+	public void NormalizeWithInvalidName(string name)
+	{
+		RegistryHelper.Normalize(name);
+	}
+
+	[DataRow(@"HKEY_CURRENT_USER", @"HKEY_CURRENT_USER\foobar", true)]
+	[DataRow(@"HKEY_CURRENT_USER", @"HKEY_CURRENT_USER", true)]
+	[DataRow(@"HKEY_CURRENT_USER\foo", @"HKEY_CURRENT_USER\foo", true)]
+	[DataRow(@"HKEY_CURRENT_USER\foo", @"HKEY_CURRENT_USER\foo\bar", true)]
+	[DataRow(@"HKEY_CURRENT_USER", @"HKEY_LOCAL_MACHINE\foobar", false)]
+	[DataRow(@"HKEY_CURRENT_USER\foo", @"HKEY_CURRENT_USER\foobar", false)]
+	[DataTestMethod]
+	public void IsSubKey(string a, string s, bool expected)
+	{
+		Assert.AreEqual(expected, RegistryHelper.IsSubKey(a, s));
 	}
 
 	[TestMethod]
@@ -184,6 +207,7 @@ public sealed class RegHelperTest
 		RegistryHelper.DeleteValue(path);
 	}
 
+	[TestMethod]
 	public void DeleteNonExistValueNotThrow()
 	{
 		RegistryHelper.DeleteValue(@"HKCU\_NOE_KEY_\", false);

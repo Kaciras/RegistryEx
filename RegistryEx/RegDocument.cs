@@ -13,7 +13,7 @@ public class RegDocument
 {
 	internal const string VER_LINE = "Windows Registry Editor Version 5.00";
 
-	public HashSet<string> Erased { get; } = new(StringComparer.OrdinalIgnoreCase);
+	public ICollection<string> Erased { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 	public Dictionary<string, ValueDict> Created { get; } = new(StringComparer.OrdinalIgnoreCase);
 
@@ -111,6 +111,11 @@ public class RegDocument
 		}
 	}
 
+	/// <summary>
+	/// Add directives reverse to the other, these directives will restore keys and 
+	/// values affected by the other to their current state.
+	/// </summary>
+	/// <param name="other"></param>
 	public void Revert(RegDocument other)
 	{
 		foreach (var name in other.Erased)
@@ -139,6 +144,11 @@ public class RegDocument
 		}
 	}
 
+	/// <summary>
+	/// Create a new RegDocument that have directives to revert this document changes
+	/// to current state.
+	/// </summary>
+	/// <returns>The new dorument</returns>
 	public RegDocument CreateRestorePoint()
 	{
 		var restoration = new RegDocument();
@@ -150,7 +160,7 @@ public class RegDocument
 	{
 		get
 		{
-			var erased = new HashSet<string>(Erased, Erased.Comparer);
+			var erased = new HashSet<string>(Erased, StringComparer.OrdinalIgnoreCase);
 			foreach (var (k, d) in Created)
 			{
 				var key = RegistryHelper.OpenKey(k);
@@ -187,7 +197,10 @@ public class RegDocument
 		}
 	}
 
-	public void Import()
+	/// <summary>
+	/// Execute directives in the document, this method is equivalent to command `regedit /s`.
+	/// </summary>
+	public void Execute()
 	{
 		foreach (var keyName in Erased)
 		{

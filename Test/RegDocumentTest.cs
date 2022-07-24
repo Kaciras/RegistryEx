@@ -10,19 +10,6 @@ public class RegDocumentTest
 		Registry.CurrentUser.DeleteSubKeyTree("_RH_Test_", false);
 	}
 
-	[ExpectedException(typeof(ArgumentException))]
-	[DataRow(@"foobar")]
-	[DataRow(@"")]
-	[DataRow(@"\")]
-	[DataRow(@"\HKCU\foobar")]
-	[DataRow(@"HKCU\foobar\")]
-	[DataRow(@"HKCU\\foobar")]
-	[DataTestMethod]
-	public void CheckKeyName(string name)
-	{
-		new RegDocument().CreateKey(name);
-	}
-
 	[TestMethod]
 	public void NormalizeKeyName()
 	{
@@ -60,14 +47,6 @@ public class RegDocumentTest
 		Assert.AreEqual(1, doc.Created.Count);
 	}
 
-	[ExpectedException(typeof(ArgumentException))]
-	[TestMethod]
-	public void CannotDeleteBasekey()
-	{
-		var doc = new RegDocument();
-		doc.DeleteKey("HKEY_CURRENT_USER");
-	}
-
 	[TestMethod]
 	public void DeleteKey()
 	{
@@ -77,10 +56,7 @@ public class RegDocumentTest
 		doc.CreateKey(@"HKEY_CURRENT_USER\_RH_Test_/foobar");
 		doc.DeleteKey(@"HKEY_CURRENT_USER\_RH_Test_");
 
-		CollectionAssert.AreEqual(new string[] { 
-			@"HKEY_CURRENT_USER\_RH_Test_/foobar",
-			@"HKEY_LOCAL_MECHINE\_RH_Test_" 
-		}, doc.Created.Keys);
+		CollectionAssert.AreEqual(new string[] { @"HKEY_CURRENT_USER\_RH_Test_/foobar" }, doc.Created.Keys);
 
 		Assert.AreEqual(1, doc.Erased.Count);
 		Assert.AreEqual(@"HKEY_CURRENT_USER\_RH_Test_", doc.Erased.First());
@@ -169,7 +145,7 @@ public class RegDocumentTest
 	{
 		var doc = new RegDocument();
 		doc.Load(Resources.SubKey);
-		doc.Import();
+		doc.Execute();
 
 		var doc2 = new RegDocument();
 		doc.Load(Resources.SubKey);
