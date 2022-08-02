@@ -27,10 +27,26 @@ public static class RegistryHelper
 		_ => throw new ArgumentException($"Invalid basekey: {name}"),
 	};
 
+	/// <summary>
+	/// Check the registry key name is valid, and convert its basekey to fullname.
+	/// </summary>
+	/// <param name="name">The key name</param>
+	/// <returns>Normalized key name</returns>
+	/// <exception cref="ArgumentException">If the name is invalid</exception>
+	/// <see href="https://docs.microsoft.com/en-us/windows/win32/sysinfo/registry-element-size-limits"/>
 	public static string Normalize(string name)
 	{
+		if (name.Length == 0)
+		{
+			throw new ArgumentException("Key name can not be empty");
+		}
+		if (name.Length > 255)
+		{
+			throw new ArgumentException("Key name should not be greater than 255 characters");
+		}
+
 		// Key name cannot start or end with \
-		if (name.Length == 0 || name[name.Length - 1] == '\\')
+		if (name[name.Length - 1] == '\\')
 		{
 			throw new ArgumentException($"Invalid key name: {name}");
 		}
@@ -303,7 +319,6 @@ public static class RegistryHelper
 		Interop.AddPrivilege("SeBackupPrivilege");
 		Interop.AddPrivilege("SeRestorePrivilege");
 	}
-
 
 	public static void RemoveTokenPrivileges()
 	{
