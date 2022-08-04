@@ -11,11 +11,16 @@ namespace RegistryEx;
 
 public static class RegistryHelper
 {
+	// https://docs.microsoft.com/en-us/windows/win32/sysinfo/registry-element-size-limits
+	public const int MAX_KEY_LENGTH = 255;
+	public const int MAX_VALUE_LENGTH = 16383;
+	
 	/// <summary>
-	/// Get the basekey by it's name, support abbreviation.
+	/// Get the Registry basekey by it's name, support short name.
 	/// </summary>
 	/// <param name="name">Name or abbreviation of the basekey.</param>
 	/// <returns>The key requested, or null if it doesn't exists.</returns>
+	/// <exception cref="ArgumentException">If the key name does not exists</exception>
 	public static RegistryKey GetBaseKey(string name) => name.ToUpper() switch
 	{
 		"HKEY_CURRENT_USER" or "HKCU" => Registry.CurrentUser,
@@ -31,16 +36,16 @@ public static class RegistryHelper
 	/// Check the registry key name is valid, and convert its basekey to fullname.
 	/// </summary>
 	/// <param name="name">The key name</param>
+	/// <param name="shortName">Should allow abbreviated basekey names</param>
 	/// <returns>Normalized key name</returns>
 	/// <exception cref="ArgumentException">If the name is invalid</exception>
-	/// <see href="https://docs.microsoft.com/en-us/windows/win32/sysinfo/registry-element-size-limits"/>
-	public static string Normalize(string name)
+	public static string CheckKeyName(string name, bool shortName = true)
 	{
 		if (name.Length == 0)
 		{
 			throw new ArgumentException("Key name can not be empty");
 		}
-		if (name.Length > 255)
+		if (name.Length > MAX_KEY_LENGTH)
 		{
 			throw new ArgumentException("Key name should not be greater than 255 characters");
 		}
@@ -55,7 +60,7 @@ public static class RegistryHelper
 		var i = slash;
 		var root = name;
 
-		// Key name cannot have consecutive slashs
+		// Key name cannot have consecutive slashs.
 		while (i != -1)
 		{
 			if (name[slash + 1] == '\\')
@@ -70,13 +75,21 @@ public static class RegistryHelper
 			root = name.Substring(0, slash);
 		}
 
-		// Convert basekey alias to full name
 		var basekey = GetBaseKey(root);
-		if (slash == -1)
+		if (!shortName)
 		{
-			return basekey.Name;
+			if (root.Length > 4)
+			{
+				return name;
+			}
+			else
+			{
+				throw new ArgumentException($"Invalid basekey: {name}");
+			}
 		}
-		return $@"{basekey.Name}\{name.Substring(slash + 1)}";
+
+		// Convert basekey alias to full name.
+		return slash == -1 ? basekey.Name : $@"{basekey.Name}\{name.Substring(slash + 1)}";
 	}
 
 	public static bool IsSubKey(string ancestor, string descendant)
@@ -322,9 +335,9 @@ public static class RegistryHelper
 
 	public static void RemoveTokenPrivileges()
 	{
-		Interop.RemovePrivilege("SeTakeOwnershipPrivilege");
-		Interop.RemovePrivilege("SeBackupPrivilege");
 		Interop.RemovePrivilege("SeRestorePrivilege");
+		Interop.RemovePrivilege("SeBackupPrivilege");
+		Interop.RemovePrivilege("SeTakeOwnershipPrivilege");
 	}
 
 	/// <summary>
