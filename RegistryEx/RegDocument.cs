@@ -9,7 +9,7 @@ namespace RegistryEx;
 
 using ValueDict = Dictionary<string, RegistryValue>;
 
-public class RegDocument 
+public class RegDocument
 {
 	internal const string VER_LINE = "Windows Registry Editor Version 5.00";
 
@@ -19,8 +19,6 @@ public class RegDocument
 
 	public void DeleteKey(string name)
 	{
-		name = RegistryHelper.Normalize(name);
-
 		Erased.Add(name);
 
 		var removed = new List<string>();
@@ -35,14 +33,8 @@ public class RegDocument
 		removed.ForEach(v => Created.Remove(v));
 	}
 
-	public void DeleteOldTree(string name)
-	{
-		Erased.Add(RegistryHelper.Normalize(name));
-	}
-
 	public ValueDict CreateKey(string name)
 	{
-		name = RegistryHelper.Normalize(name);
 		if (Created.TryGetValue(name, out var existing))
 		{
 			return existing;
@@ -135,7 +127,7 @@ public class RegDocument
 			using var key = RegistryHelper.OpenKey(name);
 			if (key == null)
 			{
-				DeleteOldTree(name);
+				Erased.Add(name);
 				continue;
 			}
 

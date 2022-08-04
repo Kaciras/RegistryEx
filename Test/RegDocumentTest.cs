@@ -16,7 +16,7 @@ public class RegDocumentTest
 	{
 		var doc = new RegDocument();
 		doc.CreateKey(@"HKEY_CURRENT_USER\_RH_Test_");
-		doc.DeleteKey(@"HKCU\_rh_tEST_");
+		doc.DeleteKey(@"HKEY_CURRENT_USER\_rh_tEST_");
 		Assert.AreEqual(0, doc.Created.Count);
 	}
 
@@ -25,20 +25,12 @@ public class RegDocumentTest
 	{
 		var doc = new RegDocument();
 		var a = doc.CreateKey(@"HKEY_CURRENT_USER\_RH_Test_");
-		var b = doc.CreateKey(@"HKCU\_RH_Test_");
-		var c = doc.CreateKey(@"HKCU\_rh_tEST_");
+		var b = doc.CreateKey(@"HKEY_CURRENT_USER\_RH_Test_");
+		var c = doc.CreateKey(@"HKEY_CURRENT_USER\_rh_tEST_");
 
 		Assert.AreSame(a, b);
 		Assert.AreSame(b, c);
 		Assert.AreEqual(1, doc.Created.Count);
-	}
-
-	[TestMethod]
-	public void NoTrailingSlashOnBasekey()
-	{
-		var doc = new RegDocument();
-		doc.CreateKey(@"HKCU");
-		Assert.IsTrue(doc.Created.ContainsKey("HKEY_CURRENT_USER"));
 	}
 
 	[TestMethod]
@@ -53,7 +45,7 @@ public class RegDocumentTest
 	{
 		var doc = new RegDocument();
 		doc.CreateKey(@"HKEY_CURRENT_USER\_RH_Test_\foobar");
-		doc.CreateKey(@"HKLM\_RH_Test_");
+		doc.CreateKey(@"HKEY_LOCAL_MACHINE\_RH_Test_");
 		doc.CreateKey(@"HKEY_CURRENT_USER\_RH_Test_/foobar");
 		doc.DeleteKey(@"HKEY_CURRENT_USER\_RH_Test_");
 
@@ -118,10 +110,10 @@ public class RegDocumentTest
 		var doc0 = new RegDocument();
 		var doc1 = new RegDocument();
 
-		doc0.CreateKey(@"HKCU\_RH_Test_\Sub");
+		doc0.CreateKey(@"HKEY_CURRENT_USER\_RH_Test_\Sub");
 
-		doc1.DeleteKey(@"HKCU\_RH_Test_");
-		var key= doc1.CreateKey(@"HKCU\foobar");
+		doc1.DeleteKey(@"HKEY_CURRENT_USER\_RH_Test_");
+		var key= doc1.CreateKey(@"HKEY_CURRENT_USER\foobar");
 		key["Dword"] = value;
 
 		doc0.Load(doc1);
