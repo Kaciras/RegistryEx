@@ -99,22 +99,12 @@ public static class RegistryKeyExtension
 
 	public static void CopyTree(this RegistryKey key, string? subkey, RegistryKey dest)
 	{
-		var transaction = Interop.CreateTransaction(IntPtr.Zero, IntPtr.Zero, 0, 0, 0, 0, null);
-		Interop.Check(transaction);
-
-		try
-		{
-			CopyTreeTransacted(transaction, key, subkey, dest);
-			Interop.Check(Interop.CommitTransaction(transaction));
-		}
-		finally
-		{
-			// CloseHandle rollbacks the transaction if not commited.
-			Interop.Check(Interop.CloseHandle(transaction));
-		}
+		using var transaction = new KernelTransaction();
+		CopyTreeTransacted(transaction, key, subkey, dest);
+		transaction.Commit();
 	}
 
-	static void CopyTreeTransacted(IntPtr trans, RegistryKey src, string? subkey, RegistryKey dest)
+	static void CopyTreeTransacted(KernelTransaction trans, RegistryKey src, string? subkey, RegistryKey dest)
 	{
 		const RegistryRights WRITEABLE = RegistryRights.WriteKey | RegistryRights.ReadKey;
 
@@ -139,7 +129,7 @@ public static class RegistryKeyExtension
 	}
 
 	// https://github.com/dotnet/runtime/blob/6c6d5d7ebd76c750e7f7cbbdef28a24657e2cabf/src/libraries/Microsoft.Win32.Registry/src/Microsoft/Win32/RegistryKey.Windows.cs#L87
-	static RegistryKey CreateSubKeyTransacted(this RegistryKey key, string subkey, IntPtr transaction, RegistryRights rights)
+	static RegistryKey CreateSubKeyTransacted(this RegistryKey key, string subkey, KernelTransaction transaction, RegistryRights rights)
 	{
 		Interop.Check(Interop.RegCreateKeyTransacted(
 				key.Handle,
