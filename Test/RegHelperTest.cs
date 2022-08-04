@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Security;
 using System.Security.AccessControl;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace RegistryEx.Test;
 
@@ -57,16 +58,26 @@ public sealed class RegHelperTest
 	}
 
 	[ExpectedException(typeof(ArgumentException))]
-	[DataRow(@"foobar")]
-	[DataRow(@"")]
-	[DataRow(@"\")]
-	[DataRow(@"\HKCU\foobar")]
-	[DataRow(@"HKCU\foobar\")]
-	[DataRow(@"HKCU\\foobar")]
+	[DataRow(@"foobar", true)]
+	[DataRow(@"", true)]
+	[DataRow(@"\", true)]
+	[DataRow(@"\HKEY_CURRENT_USER\foobar", true)]
+	[DataRow(@"HKEY_CURRENT_USER\foobar\", true)]
+	[DataRow(@"HKEY_CURRENT_USER\\foobar", true)]
+	[DataRow(@"HKCU\foobar", false)]
 	[DataTestMethod]
-	public void NormalizeWithInvalidName(string name)
+	public void CheckWithInvalidKeyName(string name, bool shortName)
 	{
-		RegistryHelper.Normalize(name);
+		RegistryHelper.CheckKeyName(name, shortName);
+	}
+
+	[DataRow(@"HKEY_CURRENT_USER\foo", @"HKEY_CURRENT_USER\foo", false)]
+	[DataRow(@"HKEY_CURRENT_USER\foo", @"HKEY_CURRENT_USER\foo", true)]
+	[DataRow(@"HKCU\foo", @"HKEY_CURRENT_USER\foo", true)]
+	[DataTestMethod]
+	public void CheckKeyName(string name, string expected, bool shortName)
+	{
+		Assert.AreEqual(expected, RegistryHelper.CheckKeyName(name, shortName));
 	}
 
 	[DataRow(@"HKEY_CURRENT_USER", @"HKEY_CURRENT_USER\foobar", true)]
@@ -264,6 +275,22 @@ public sealed class RegHelperTest
 	public void ElevateNonExists()
 	{
 		RegistryHelper.Elevate(Registry.CurrentUser, "_NON_EXISTS");
+	}
+
+	[ExpectedException(typeof(UnauthorizedAccessException))]
+	[TestMethod]
+	public void RemoveTokenPrivileges()
+	{
+		RegistryHelper.RemoveTokenPrivileges();
+		try
+		{
+			using var key = Registry.CurrentUser.CreateSubKey("_RH_Test_");
+			key.SaveHive("saved.hiv");
+		}
+		finally
+		{
+			RegistryHelper.AddTokenPrivileges();
+		}
 	}
 
 	[TestMethod]
