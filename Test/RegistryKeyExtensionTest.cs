@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System.Security.Principal;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace RegistryEx.Test;
 
 [TestClass]
@@ -137,6 +138,20 @@ public sealed class RegistryKeyExtensionTest
 	{
 		HKCU.SetValue(@"_RH_Test_", "Dword", 8964);
 		Assert.AreEqual(8964, Registry.GetValue(@"HKEY_CURRENT_USER\_RH_Test_", "Dword", 0));
+	}
+
+	[TestMethod]
+	public void CopyTree()
+	{
+		var user = WindowsIdentity.GetCurrent().User!.Value;
+		using var hkcuSource = Registry.Users.OpenSubKey($@"{user}\_RH_Test_", true)!;
+		using var branchA = hkcuSource.CreateSubKey("A", true);
+
+		HKCU.CopyTree("_RH_Test_", branchA);
+
+		using var leaf = branchA.OpenSubKey(@"A")!;
+		Assert.AreEqual(0, leaf.SubKeyCount);
+		Assert.AreEqual(0x123, branchA.GetValue("Dword"));
 	}
 
 	[TestMethod]

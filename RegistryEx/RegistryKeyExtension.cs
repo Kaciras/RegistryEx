@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Security.AccessControl;
 using Microsoft.Win32;
 
 namespace RegistryEx;
@@ -94,6 +95,66 @@ public static class RegistryKeyExtension
 	{
 		using var subKey = key.CreateSubKey(path, true);
 		subKey.SetValue(name, value);
+	}
+
+	public static void CopyTree(this RegistryKey key, string? subkey, RegistryKey dest)
+	{
+		var transaction = Interop.CreateTransaction(IntPtr.Zero, IntPtr.Zero, 0, 0, 0, 0, null);
+		Interop.Check(transaction);
+
+		try
+		{
+			CopyTreeTransacted(transaction, key, subkey, dest);
+			Interop.Check(Interop.CommitTransaction(transaction));
+		}
+		finally
+		{
+			// CloseHandle rollbacks the transaction if not commited.
+			Interop.Check(Interop.CloseHandle(transaction));
+		}
+	}
+
+	static void CopyTreeTransacted(IntPtr trans, RegistryKey src, string? subkey, RegistryKey dest)
+	{
+		const RegistryRights WRITEABLE = RegistryRights.WriteKey | RegistryRights.ReadKey;
+
+		if (subkey == null)
+		{
+			foreach (var name in src.GetValueNames())
+			{
+				dest.SetValue(name, src.GetValue(name)!, src.GetValueKind(name));
+			}
+			foreach (var name in src.GetSubKeyNames())
+			{
+				using var target = CreateSubKeyTransacted(dest, name, trans, WRITEABLE);
+				CopyTreeTransacted(trans, src, name, target);
+			}
+		}
+		else
+		{
+			using var srcSubkey = src.OpenSubKey(subkey)!;
+			CopyTreeTransacted(trans, srcSubkey, null, dest);
+			dest.SetAccessControl(srcSubkey.GetAccessControl());
+		}
+	}
+
+	// https://github.com/dotnet/runtime/blob/6c6d5d7ebd76c750e7f7cbbdef28a24657e2cabf/src/libraries/Microsoft.Win32.Registry/src/Microsoft/Win32/RegistryKey.Windows.cs#L87
+	static RegistryKey CreateSubKeyTransacted(this RegistryKey key, string subkey, IntPtr transaction, RegistryRights rights)
+	{
+		Interop.Check(Interop.RegCreateKeyTransacted(
+				key.Handle,
+				subkey,
+				0,
+				null,
+				0,
+				(int)rights,
+				IntPtr.Zero,
+				out var hkResult,
+				out _,
+				transaction,
+				IntPtr.Zero));
+
+		return RegistryKey.FromHandle(hkResult);
 	}
 
 	/// <summary>

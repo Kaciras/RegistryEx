@@ -31,6 +31,42 @@ internal static class Interop
 	const int TOKEN_QUERY = 0x00000008;
 	const int TOKEN_ADJUST_PRIVILEGES = 0x00000020;
 
+	[DllImport("KtmW32.dll", SetLastError = true)]
+	public static extern IntPtr CreateTransaction(
+		IntPtr lpTransactionAttributes,
+		IntPtr UOW,
+		int CreateOptions,
+		int IsolationLevel,
+		int IsolationFlags,
+		int Timeout,
+		string? Description
+	);
+
+	[DllImport("KtmW32.dll", SetLastError = true)]
+
+	public static extern bool CommitTransaction(IntPtr handle);
+
+	[DllImport("KtmW32.dll", SetLastError = true)]
+	public static extern bool RollbackTransaction(IntPtr handle);
+
+	[DllImport("kernel32.dll", SetLastError = true)]
+	public static extern bool CloseHandle(IntPtr handle);
+
+	[DllImport("advapi32.dll")]
+	public static extern int RegCreateKeyTransacted(
+		SafeRegistryHandle hKey, 
+		string lpSubKey, 
+		int reserved,
+		string? lpClass,
+		int dwOptions,
+		int samDesired,
+		IntPtr secAttrs,
+		out SafeRegistryHandle hkResult,
+		out int lpdwDisposition,
+		IntPtr hTransaction,
+		IntPtr pExtendedParemeter
+	);
+
 	[DllImport("advapi32.dll")]
 	public static extern int RegRestoreKey(SafeRegistryHandle hKey, string lpFile, uint flags);
 
@@ -84,6 +120,15 @@ internal static class Interop
 
 		Check(LookupPrivilegeValue(null, privilege, ref tp.Luid));
 		Check(AdjustTokenPrivileges(htok, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero));
+	}
+
+	public static void Check(IntPtr @return)
+	{
+
+		if (@return == IntPtr.Zero || @return == new IntPtr(-1) || ((ulong)@return) == 0xffffffffffffffff)
+		{
+			Check(Marshal.GetLastWin32Error());
+		}
 	}
 
 	public static void Check(bool @return)
