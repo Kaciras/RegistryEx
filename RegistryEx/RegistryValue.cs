@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Microsoft.Win32;
@@ -87,10 +86,7 @@ public readonly struct RegistryValue : IEquatable<RegistryValue>
 
 	bool ArrayEquals<T>(object otherValue)
 	{
-		if (otherValue is not T[] || otherValue == null)
-		{
-			return false;
-		}
+		// Value type is already checked in constructor.
 		return ((T[])Value).SequenceEqual((T[])otherValue);
 	}
 
