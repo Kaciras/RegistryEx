@@ -4,8 +4,17 @@ using Microsoft.Win32.SafeHandles;
 
 namespace RegistryEx;
 
+/// <summary>
+/// SafeHandle wrapper for kernel transaction handle.
+/// <br/>
+/// The transaction will rollback on disposing if it does not commited.
+/// </summary>
+/// <see href="https://github.com/PowerShell/PowerShell/blob/master/src/System.Management.Automation/namespaces/SafeTransactionHandle.cs"/>
 public sealed class KernelTransaction : SafeHandleZeroOrMinusOneIsInvalid
 {
+	/// <summary>
+	/// Create a new transaction object.
+	/// </summary>
 	public KernelTransaction() : base(true)
 	{
 		handle = CreateTransaction(IntPtr.Zero, IntPtr.Zero, 0, 0, 0, 0, null);

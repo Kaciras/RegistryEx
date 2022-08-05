@@ -17,8 +17,6 @@ public readonly struct RegFileWriter : IDisposable
 
 	readonly StreamWriter writer;
 
-	public RegFileWriter(string file) : this(File.OpenWrite(file)) { }
-
 	public RegFileWriter(Stream stream)
 	{
 		writer = new(stream, Encoding.Unicode);
@@ -149,11 +147,16 @@ public readonly struct RegFileWriter : IDisposable
 
 	void WriteBinaryLine(IEnumerable<string> value)
 	{
-		value = value
-			.Where(s => s.Length > 0)
-			.Select(s => s + "\0");
-
-		WriteBinaryLine(string.Join("", value) + "\0");
+		var sb = new StringBuilder();
+		foreach (var item in value)
+		{
+			if (item.Length == 0)
+			{
+				continue;
+			}
+			sb.Append(item).Append('\0');
+		}
+		WriteBinaryLine(sb.Append('\0').ToString());
 	}
 
 	void WriteBinaryLine(string value)
