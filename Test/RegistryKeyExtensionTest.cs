@@ -155,6 +155,47 @@ public sealed class RegistryKeyExtensionTest
 	}
 
 	[TestMethod]
+	public void OpenSubKeyTransacted()
+	{
+		using var transaction = new KernelTransaction();
+		using var key = HKCU.OpenSubKey("_RH_Test_", transaction, true);
+
+		key.DeleteValue("Dword");
+		Assert.AreEqual(0x123, RegistryHelper.GetValue(@"HKCU\_RH_Test_\Dword"));
+
+		transaction.Commit();
+		Assert.IsNull(RegistryHelper.GetValue(@"HKCU\_RH_Test_\Dword"));
+	}
+
+	[ExpectedException(typeof(UnauthorizedAccessException))]
+	[TestMethod]
+	public void OpenSubKeyTransactedReadonly()
+	{
+		using var transaction = new KernelTransaction();
+		using var key = HKCU.OpenSubKey("_RH_Test_", transaction);
+		key.SetValue("Dword", 0x456);
+	}
+
+	[TestMethod]
+	public void DeleteSubKeyTransacted()
+	{
+		using var transaction = new KernelTransaction();
+		HKCU.DeleteSubKey("_RH_Test_", transaction);
+
+		Assert.IsTrue(RegistryHelper.KeyExists(@"HKCU\_RH_Test_"));
+		transaction.Commit();
+		Assert.IsFalse(RegistryHelper.KeyExists(@"HKCU\_RH_Test_"));
+	}
+
+	[ExpectedException(typeof(ArgumentException))]
+	[TestMethod]
+	public void DeleteSubKeyTransactedThrowOnMissing()
+	{
+		using var transaction = new KernelTransaction();
+		HKCU.DeleteSubKey("_NOE_", transaction);
+	}
+
+	[TestMethod]
 	public void SaveAndRestoreHive()
 	{
 		using var key = HKCU.OpenSubKey("_RH_Test_");

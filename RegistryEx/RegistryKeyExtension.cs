@@ -97,41 +97,90 @@ public static class RegistryKeyExtension
 		subKey.SetValue(name, value);
 	}
 
+	/// <summary>
+	///		Copies the specified registry key, along with its values, access rules, and subkeys, 
+	///		to the specified destination key.
+	/// </summary>
+	/// <param name="subkey">
+	///		The name of the key. 
+	///		This key must be a subkey of the key identified by the key parameter.
+	///		This parameter can also be NULL.
+	/// </param>
+	/// <param name="dest">
+	///		The destination key. The calling process must have KEY_CREATE_SUB_KEY access to the key.
+	///	</param>
 	public static void CopyTree(this RegistryKey key, string? subkey, RegistryKey dest)
 	{
 		using var transaction = new KernelTransaction();
-		CopyTreeTransacted(transaction, key, subkey, dest);
+		CopyTree(key, subkey, dest, transaction);
 		transaction.Commit();
 	}
 
-	static void CopyTreeTransacted(KernelTransaction trans, RegistryKey src, string? subkey, RegistryKey dest)
+	static void CopyTree(RegistryKey src, string? subkey, RegistryKey dest, KernelTransaction tx)
 	{
-		const RegistryRights WRITEABLE = RegistryRights.WriteKey | RegistryRights.ReadKey;
-
-		if (subkey == null)
+		if (subkey != null)
 		{
+			using var srcSubkey = src.OpenSubKey(subkey)!;
+			CopyTree(srcSubkey, null, dest, tx);
+			dest.SetAccessControl(srcSubkey.GetAccessControl());
+		}
+		else
+		{
+			foreach (var name in src.GetSubKeyNames())
+			{
+				using var target = dest.CreateSubKey(name, tx);
+				CopyTree(src, name, target, tx);
+			}
 			foreach (var name in src.GetValueNames())
 			{
 				dest.SetValue(name, src.GetValue(name)!, src.GetValueKind(name));
 			}
-			foreach (var name in src.GetSubKeyNames())
-			{
-				using var target = CreateSubKeyTransacted(dest, name, trans, WRITEABLE);
-				CopyTreeTransacted(trans, src, name, target);
-			}
-		}
-		else
-		{
-			using var srcSubkey = src.OpenSubKey(subkey)!;
-			CopyTreeTransacted(trans, srcSubkey, null, dest);
-			dest.SetAccessControl(srcSubkey.GetAccessControl());
 		}
 	}
 
-	// https://github.com/dotnet/runtime/blob/6c6d5d7ebd76c750e7f7cbbdef28a24657e2cabf/src/libraries/Microsoft.Win32.Registry/src/Microsoft/Win32/RegistryKey.Windows.cs#L87
-	static RegistryKey CreateSubKeyTransacted(this RegistryKey key, string subkey, KernelTransaction transaction, RegistryRights rights)
+	/// <summary>
+	///		Creates the specified registry key and associates it with a transaction. 
+	///		If the key already exists, the function opens it. 
+	/// </summary>
+	/// <param name="subkey">
+	///		The name of a subkey that this function opens or creates. 
+	///		The subkey specified must be a subkey of the key identified by the key parameter.
+	/// </param>
+	/// <param name="transaction">
+	///		An active transaction.
+	/// </param>
+	/// <returns>The newly created subkey, or null if the operation failed.</returns>
+	public static RegistryKey CreateSubKey(
+		this RegistryKey key,
+		string subkey,
+		KernelTransaction transaction)
 	{
-		Interop.Check(Interop.RegCreateKeyTransacted(
+		const RegistryRights WRITEABLE = RegistryRights.WriteKey | RegistryRights.ReadKey;
+		return CreateSubKey(key, subkey, transaction, WRITEABLE);
+	}
+
+	/// <summary>
+	///		Creates the specified registry key and associates it with a transaction. 
+	///		If the key already exists, the function opens it. 
+	/// </summary>
+	/// <param name="subkey">
+	///		The name of a subkey that this function opens or creates. 
+	///		The subkey specified must be a subkey of the key identified by the key parameter.
+	/// </param>
+	/// <param name="transaction">
+	///		An active transaction.
+	/// </param>
+	/// <param name="rights">
+	///		A mask that specifies the access rights for the key to be created.
+	///	</param>
+	/// <returns>The newly created subkey, or null if the operation failed.</returns>
+	public static RegistryKey CreateSubKey(
+		this RegistryKey key, 
+		string subkey,
+		KernelTransaction transaction,
+		RegistryRights rights)
+	{
+		var hRessult = Interop.RegCreateKeyTransacted(
 				key.Handle,
 				subkey,
 				0,
@@ -142,9 +191,105 @@ public static class RegistryKeyExtension
 				out var hkResult,
 				out _,
 				transaction,
-				IntPtr.Zero));
+				IntPtr.Zero);
 
+		Interop.Check(hRessult);
 		return RegistryKey.FromHandle(hkResult);
+	}
+
+	/// <summary>
+	///		Opens the specified registry key and associates it with a transaction.
+	/// </summary>
+	/// <param name="subkey">
+	///		The name of the registry subkey to be opened.
+	/// </param>
+	/// <param name="transaction">
+	///		An active transaction.
+	/// </param>
+	/// <param name="writeable">
+	///		true to indicate the opened subkey is writable; otherwise, false.
+	/// </param>
+	public static RegistryKey OpenSubKey(
+		this RegistryKey key,
+		string subkey,
+		KernelTransaction transaction,
+		bool writeable = false)
+	{
+		var rights = writeable
+			? RegistryRights.WriteKey | RegistryRights.ReadKey
+			: RegistryRights.ReadKey;
+
+		return OpenSubKey(key, subkey, transaction, rights);
+	}
+
+	/// <summary>
+	///		Opens the specified registry key and associates it with a transaction.
+	/// </summary>
+	/// <param name="subkey">
+	///		The name of the registry subkey to be opened.
+	/// </param>
+	/// <param name="transaction">
+	///		An active transaction.
+	/// </param>
+	/// <param name="rights">
+	///		A mask that specifies the desired access rights to the key.
+	/// </param>
+	public static RegistryKey OpenSubKey(
+		this RegistryKey key,
+		string subkey,
+		KernelTransaction transaction,
+		RegistryRights rights)
+	{
+		var hRessult = Interop.RegOpenKeyTransacted(
+				key.Handle,
+				subkey,
+				0,
+				(int)rights,
+				out var hkResult,
+				transaction,
+				IntPtr.Zero);
+
+		Interop.Check(hRessult);
+		return RegistryKey.FromHandle(hkResult);
+	}
+
+	/// <summary>
+	///		Deletes a subkey and its values from the specified platform-specific view 
+	///		of the registry as a transacted operation.
+	///	<br/>
+	///		The subkey to be deleted must not have subkeys. 
+	///		To delete a key and all its subkeys, you need to enumerate the subkeys and delete them individually.
+	/// </summary>
+	/// <param name="subkey">
+	///		The name of the key to be deleted. 
+	///		This key must be a subkey of the key specified by the value of the key parameter.
+	///	</param>
+	/// <param name="transaction">
+	///		An active transaction.
+	/// </param>
+	/// <param name="throwOnMissing">
+	///		Indicates whether an exception should be raised if the specified subkey cannot
+	///		be found. If this argument is true and the specified subkey does not exist, an
+	///		exception is raised. If this argument is false and the specified subkey does
+	///		not exist, no action is taken.
+	/// </param>
+	public static void DeleteSubKey(
+		this RegistryKey key,
+		string subkey,
+		KernelTransaction transaction,
+		bool throwOnMissing = true)
+	{
+		var hResult = Interop.RegDeleteKeyTransacted(key.Handle, subkey, 0, 0, transaction, IntPtr.Zero);
+
+		// ERROR_FILE_NOT_FOUND
+		if (hResult != 2)
+		{
+			Interop.Check(hResult);
+		}
+		else if (throwOnMissing)
+		{
+			throw new ArgumentException("The specified subkey is not exists.");
+		}
 	}
 
 	/// <summary>
