@@ -65,6 +65,7 @@ public sealed class RegHelperTest
 	[DataRow(@"HKEY_CURRENT_USER\foobar\", true)]
 	[DataRow(@"HKEY_CURRENT_USER\\foobar", true)]
 	[DataRow(@"HKCU\foobar", false)]
+	[DataRow(@"HKCU\loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog", false)]
 	[DataTestMethod]
 	public void CheckWithInvalidKeyName(string name, bool shortName)
 	{
@@ -74,6 +75,8 @@ public sealed class RegHelperTest
 	[DataRow(@"HKEY_CURRENT_USER\foo", @"HKEY_CURRENT_USER\foo", false)]
 	[DataRow(@"HKEY_CURRENT_USER\foo", @"HKEY_CURRENT_USER\foo", true)]
 	[DataRow(@"HKCU\foo", @"HKEY_CURRENT_USER\foo", true)]
+	[DataRow(@"HKCU", @"HKEY_CURRENT_USER", true)]
+	[DataRow(@"HKEY_CURRENT_USER", @"HKEY_CURRENT_USER", true)]
 	[DataTestMethod]
 	public void CheckKeyName(string name, string expected, bool shortName)
 	{
@@ -297,7 +300,6 @@ public sealed class RegHelperTest
 	public void Elevate()
 	{
 		using var key = Registry.CurrentUser.CreateSubKey("_test_sec_0");
-		RegistryHelper.AddTokenPrivileges();
 
 		var security = new RegistrySecurity();
 		security.SetAccessRuleProtection(true, false);
@@ -318,5 +320,22 @@ public sealed class RegHelperTest
 		security.SetAccessRuleProtection(false, true);
 		key.SetAccessControl(security);
 		Registry.CurrentUser.DeleteSubKey("_test_sec_0");
+	}
+
+	[TestMethod]
+	public void RestoreAccessControlOnDeletedKey()
+	{
+		using var key = Registry.CurrentUser.CreateSubKey("_test_sec_0");
+
+		var security = new RegistrySecurity();
+		security.SetAccessRuleProtection(true, false);
+		key.SetAccessControl(security);
+
+		using (var _ = RegistryHelper.Elevate(Registry.CurrentUser, "_test_sec_0"))
+		{
+			Registry.CurrentUser.DeleteSubKeyTree("_test_sec_0");
+		}
+
+		Assert.IsFalse(Registry.CurrentUser.ContainsSubKey("_test_sec_0"));
 	}
 }

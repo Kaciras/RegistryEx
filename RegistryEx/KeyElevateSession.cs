@@ -51,20 +51,20 @@ public sealed class KeyElevateSession : IDisposable
 		{
 			try
 			{
-				var security = key.GetAccessControl();
+				var acl = key.GetAccessControl();
 				if (oldRule != null)
 				{
-					security.SetAccessRule(oldRule);
+					acl.SetAccessRule(oldRule);
 				}
 				else
 				{
-					security.RemoveAccessRule(rule);
+					acl.RemoveAccessRule(rule);
 				}
 
-				security.SetOwner(oldOwner);
-				key.SetAccessControl(security);
+				acl.SetOwner(oldOwner);
+				key.SetAccessControl(acl);
 			}
-			catch (IOException e) when (e.HResult == 1018)
+			catch (InvalidOperationException)
 			{
 				// key is deleted, nothing to do.
 			}
