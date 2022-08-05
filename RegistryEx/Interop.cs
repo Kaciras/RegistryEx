@@ -46,6 +46,27 @@ internal static class Interop
 	);
 
 	[DllImport("advapi32.dll")]
+	public static extern int RegOpenKeyTransacted(
+		SafeRegistryHandle hKey,
+		string lpSubKey,
+		int ulOptions,
+		int samDesired,
+		out SafeRegistryHandle hkResult,
+		KernelTransaction hTransaction,
+		IntPtr pExtendedParemeter
+	);
+
+	[DllImport("advapi32.dll")]
+	public static extern int RegDeleteKeyTransacted(
+		SafeRegistryHandle hKey,
+		string lpSubKey,
+		int samDesired,
+		int reserved,
+		KernelTransaction hTransaction,
+		IntPtr pExtendedParemeter
+	);
+
+	[DllImport("advapi32.dll")]
 	public static extern int RegRestoreKey(SafeRegistryHandle hKey, string lpFile, uint flags);
 
 	[DllImport("advapi32.dll")]

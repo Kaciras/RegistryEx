@@ -42,10 +42,10 @@ public readonly struct RegistryValue : IEquatable<RegistryValue>
 					Value = value.ToString();
 					break;
 				case (RegistryValueKind.DWord, _):
-					Value = Convert.ToUInt32(value);
+					Value = Convert.ToInt32(value);
 					break;
 				case (RegistryValueKind.QWord, _):
-					Value = Convert.ToUInt64(value);
+					Value = Convert.ToInt64(value);
 					break;
 				default:
 					throw new ArgumentException("The type of the value object did not match the kind");

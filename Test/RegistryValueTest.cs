@@ -1,4 +1,5 @@
-﻿namespace RegistryEx.Test;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+namespace RegistryEx.Test;
 
 [TestClass]
 public sealed class RegistryValueTest
@@ -92,5 +93,38 @@ public sealed class RegistryValueTest
 		Assert.AreNotEqual<object>(a, b);
 		Assert.AreNotEqual(a, b);
 		Assert.AreNotEqual(a.GetHashCode(), b.GetHashCode());
+	}
+
+	public static IEnumerable<object?[]> Kinds()
+	{
+		yield return new object?[] { "_NOE_", null, RegistryValueKind.Unknown };
+		yield return new object?[] { "", "文字文字", RegistryValueKind.String };
+		yield return new object?[] { "Dword", 0x123, RegistryValueKind.DWord };
+		yield return new object?[] { "Qword", 0x666888L, RegistryValueKind.QWord };
+		yield return new object?[] { "Expand", "%USERPROFILE%", RegistryValueKind.ExpandString };
+		yield return new object?[] { "Binary", new byte[] { 0xfa, 0x51, 0x6f, 0x89 }, RegistryValueKind.Binary };
+		yield return new object?[] { "None", new byte[] { 0x19, 0x89, 0x06, 0x04, 0 }, RegistryValueKind.None };
+		yield return new object?[] { "Multi", new string[] { "Str0","Str1" }, RegistryValueKind.MultiString };
+	}
+
+	[DynamicData(nameof(Kinds), DynamicDataSourceType.Method)]
+	[DataTestMethod]
+	public void From(string name, object? value, RegistryValueKind kind)
+	{
+		using var _ = TestFixture.Import("Kinds");
+		using var key = Registry.CurrentUser.CreateSubKey("_RH_Test_");
+
+		var fromRegistry = RegistryValue.From(key, name);
+		Assert.AreEqual(kind, fromRegistry.Kind);
+
+		if (value is Array data)
+		{
+			CollectionAssert.AreEqual(data,
+				(System.Collections.ICollection)fromRegistry.Value);
+		}
+		else
+		{
+			Assert.AreEqual(value, fromRegistry.Value);
+		}
 	}
 }

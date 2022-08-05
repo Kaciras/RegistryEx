@@ -13,11 +13,10 @@ public class ImportRegFile
 	}
 
 	[Benchmark]
-	public object @RegDocument()
+	public object Document()
 	{
-		var doc = new RegDocument();
-		doc.LoadFile(@"Resources/Redundant.reg");
-		doc.Import();
+		var doc = RegDocument.ParseFile(@"Resources/Redundant.reg");
+		doc.Execute();
 		return doc;
 	}
 

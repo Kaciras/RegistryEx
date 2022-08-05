@@ -21,7 +21,7 @@ internal static class InternalUtils
 
 	public static void AddAll<TKey, TValue>(
 		this IDictionary<TKey, TValue> first,
-		IDictionary<TKey, TValue> second)
+		IEnumerable<KeyValuePair<TKey, TValue>> second)
 	{
 		foreach (var item in second)
 			first.Add(item.Key, item.Value);
