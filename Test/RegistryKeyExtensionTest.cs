@@ -1,4 +1,5 @@
 ﻿using System.Security.Principal;
+using System.Transactions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace RegistryEx.Test;
 
@@ -193,6 +194,51 @@ public sealed class RegistryKeyExtensionTest
 	{
 		using var transaction = new KernelTransaction();
 		HKCU.DeleteSubKey("_NOE_", transaction);
+	}
+
+	[TestMethod]
+	public void DeleteSubKeyTransactedAllowMissing()
+	{
+		using var transaction = new KernelTransaction();
+		HKCU.DeleteSubKey("_NOE_", transaction, false);
+	}
+
+	[ExpectedException(typeof(InvalidOperationException))]
+	[TestMethod]
+	public void DeleteSubKeyNotEmpty()
+	{
+		using var _ = TestFixture.Import("SubKey");
+		using var transaction = new KernelTransaction();
+
+		HKCU.DeleteSubKey("_RH_Test_", transaction);
+	}
+
+	[TestMethod]
+	public void DeleteSubKeyTreeTransacted()
+	{
+		using var _ = TestFixture.Import("SubKey");
+		using var transaction = new KernelTransaction();
+		
+		HKCU.DeleteSubKeyTree("_RH_Test_", transaction);
+		Assert.IsTrue(HKCU.ContainsSubKey("_RH_Test_"));
+
+		transaction.Commit();
+		Assert.IsFalse(HKCU.ContainsSubKey("_RH_Test_"));
+	}
+
+	[ExpectedException(typeof(ArgumentException))]
+	[TestMethod]
+	public void DeleteSubKeyTreeTransactedThrowOnMissing()
+	{
+		using var transaction = new KernelTransaction();
+		HKCU.DeleteSubKeyTree("_NOE_");
+	}
+
+	[TestMethod]
+	public void DeleteSubKeyTreeTransactedAllowMissing()
+	{
+		using var transaction = new KernelTransaction();
+		HKCU.DeleteSubKeyTree("_NOE_", transaction, false);
 	}
 
 	[TestMethod]

@@ -209,7 +209,7 @@ public static class RegistryKeyExtension
 	/// <param name="writeable">
 	///		true to indicate the opened subkey is writable; otherwise, false.
 	/// </param>
-	public static RegistryKey OpenSubKey(
+	public static RegistryKey? OpenSubKey(
 		this RegistryKey key,
 		string subkey,
 		KernelTransaction transaction,
@@ -234,7 +234,7 @@ public static class RegistryKeyExtension
 	/// <param name="rights">
 	///		A mask that specifies the desired access rights to the key.
 	/// </param>
-	public static RegistryKey OpenSubKey(
+	public static RegistryKey? OpenSubKey(
 		this RegistryKey key,
 		string subkey,
 		KernelTransaction transaction,
@@ -249,6 +249,10 @@ public static class RegistryKeyExtension
 				transaction,
 				IntPtr.Zero);
 
+		if (hRessult == 2)
+		{
+			return null;
+		}
 		Interop.Check(hRessult);
 		return RegistryKey.FromHandle(hkResult);
 	}
@@ -281,10 +285,48 @@ public static class RegistryKeyExtension
 	{
 		var hResult = Interop.RegDeleteKeyTransacted(key.Handle, subkey, 0, 0, transaction, IntPtr.Zero);
 
-		// ERROR_FILE_NOT_FOUND
-		if (hResult != 2)
+		if (hResult == 5 && key.SubKeyCount > 0)
+		{
+			throw new InvalidOperationException("The subkey to be deleted must not have subkeys.");
+		}
+		else if (hResult != 2) // ERROR_FILE_NOT_FOUND
 		{
 			Interop.Check(hResult);
+		}
+		else if (throwOnMissing)
+		{
+			throw new ArgumentException("The specified subkey is not exists.");
+		}
+	}
+
+	/// <summary>
+	///		Recursively deletes a subkey and any child subkeys as a transacted operation.
+	/// </summary>
+	/// <param name="subkey">
+	///		SubKey to delete.
+	/// </param>
+	/// <param name="transaction">
+	///		An active transaction.
+	/// </param>
+	/// <param name="throwOnMissing">
+	///		Indicates whether an exception should be raised if the specified subkey cannot
+	///		be found.
+	///	</param>
+	public static void DeleteSubKeyTree(
+		this RegistryKey key,
+		string subkey,
+		KernelTransaction transaction,
+		bool throwOnMissing = true)
+	{
+		using var opened = key.OpenSubKey(subkey, transaction, true);
+		if (opened != null)
+		{
+			foreach (var name in opened.GetSubKeyNames())
+			{
+				opened.DeleteSubKeyTree(name, transaction, true);
+			}
+
+			key.DeleteSubKey(subkey, transaction, true);
 		}
 		else if (throwOnMissing)
 		{
