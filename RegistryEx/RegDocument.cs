@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Xml.Linq;
 using Microsoft.Win32;
 
 namespace RegistryEx;
@@ -40,6 +42,53 @@ public class RegDocument
 			return existing;
 		}
 		return Created[name] = new(StringComparer.OrdinalIgnoreCase);
+	}
+
+
+	/// <summary>
+	/// Remove redundant key entries that not affect execution result.
+	/// <br/>
+	/// For example, the second line create it preceding keys, so the first line is redundant.
+	/// <code>
+	/// [HKEY_CURRENT_USER\_RH_Test_]
+	/// [HKEY_CURRENT_USER\_RH_Test_\Sub]
+	/// </code>
+	/// For performance reason, RegDocument does not remove them automatically.
+	/// </summary>
+	public void Compact()
+	{
+		var removed = new List<string>();
+		foreach (var des in Erased)
+		{
+			foreach (var anc in Erased)
+			{
+				if (RegistryHelper.IsSubKey(anc, des) && !ReferenceEquals(anc,des))
+				{
+					removed.Add(des);
+					break;
+				}
+			}
+		}
+		removed.ForEach(v => Erased.Remove(v));
+
+		removed.Clear();
+		foreach (var (anc, dict) in Created)
+		{
+			if (dict.Count > 0)
+			{
+				continue;
+			}
+			foreach (var des in Created.Keys)
+			{
+				
+				if (RegistryHelper.IsSubKey(anc, des) && !ReferenceEquals(anc, des))
+				{
+					removed.Add(anc);
+					break;
+				}
+			}
+		}
+		removed.ForEach(v => Created.Remove(v));
 	}
 
 	public void LoadFile(string path)
@@ -155,6 +204,9 @@ public class RegDocument
 		return restoration;
 	}
 
+	/// <summary>
+	/// If is true, the information stored in the document is already in Registry,
+	/// </summary>
 	public bool IsSuitable
 	{
 		get

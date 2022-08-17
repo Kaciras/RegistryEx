@@ -38,6 +38,7 @@ public class RegDocumentTest
 	{
 		var doc = RegDocument.ParseFile(@"Resources/Kinds.reg");
 		Assert.AreEqual(1, doc.Created.Count);
+		Assert.AreEqual("文字文字", doc.Created.First().Value[""].Value);
 	}
 
 	[TestMethod]
@@ -59,10 +60,20 @@ public class RegDocumentTest
 	}
 
 	[TestMethod]
+	public void Compact()
+	{
+		var doc = new RegDocument();
+		doc.Load(Resources.Redundant_1);
+		doc.Compact();
+
+		Snapshots.AssertMatchRegFile(doc);
+	}
+
+	[TestMethod]
 	public void Deterministic()
 	{
 		var doc = new RegDocument();
-		doc.Load(Resources.Redundant);
+		doc.Load(Resources.Redundant_0);
 		Assert.AreEqual(2, doc.Created.Count);
 	}
 
@@ -72,7 +83,7 @@ public class RegDocumentTest
 		var doc = new RegDocument();
 		Assert.IsTrue(doc.IsSuitable);
 
-		doc.Load(Resources.Redundant);
+		doc.Load(Resources.Redundant_0);
 		Assert.IsFalse(doc.IsSuitable);
 
 		TestFixture.Import("SubKey");

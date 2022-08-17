@@ -115,30 +115,69 @@ namespace RegistryEx.Test.Properties {
         ///[HKEY_CURRENT_USER\_RH_Test_]
         ///&quot;foo&quot;=&quot;bar&quot;
         ///
+        ///[HKEY_CURRENT_USER\_RH_Test_\123456]
+        ///
+        ///[HKEY_CURRENT_USER\_RH_Test_\Sub]
+        ///
+        ///;Above keys has been cleared
+        ///[-HKEY_CURRENT_USER\_RH_Test_]
+        ///
         ///[HKEY_CURRENT_USER\_RH_Test_\Sub]
         ///@=dword:00000044
-        ///
-        ///[-HKEY_CURRENT_USER\_RH_Test_]
         ///
         ///[HKEY_CURRENT_USER\_RH_Test_]
         ///&quot;foo&quot;=-
         ///@=&quot;Invalid&quot;
+        ///
+        ///;Above values has been overridden
         ///&quot;foo&quot;=&quot;baz&quot;
         ///@=dword:00000123
         ///.
         /// </summary>
-        internal static string Redundant {
+        internal static string Redundant_0 {
             get {
-                return ResourceManager.GetString("Redundant", resourceCulture);
+                return ResourceManager.GetString("Redundant_0", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Windows Registry Editor Version 5.00
         ///
-        ///[HKEY_CURRENT_USER\_RH_Test_\Key]
+        ///[-HKEY_CURRENT_USER\_RH_Test_\Sub]
+        ///
+        ///[-HKEY_CURRENT_USER\_RH_Test_\Abother]
+        ///
+        ///[-HKEY_CURRENT_USER\_RH_Test_]
+        ///
+        ///
+        ///[HKEY_CURRENT_USER\_RH_Test_\Abother]
+        ///
+        ///[HKEY_CURRENT_USER\_RH_Test_\Sub]
+        ///@=dword:00000044
+        ///
+        ///[HKEY_CURRENT_USER\_RH_Test_]
+        ///
+        ///[HKEY_CURRENT_USER\_RH_Test_\Sub\Deep]
+        ///
+        ///.
+        /// </summary>
+        internal static string Redundant_1 {
+            get {
+                return ResourceManager.GetString("Redundant_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Windows Registry Editor Version 5.00
+        ///
+        ///[-HKEY_CURRENT_USER\_RH_Test_]
+        ///
+        ///[HKEY_CURRENT_USER\_RH_Test_]
         ///&quot;foo&quot;=&quot;baz&quot;
         ///@=dword:00000123
+        ///
+        ///[HKEY_CURRENT_USER\_RH_Test_\Sub]
+        ///@=dword:00000044
         ///
         ///.
         /// </summary>

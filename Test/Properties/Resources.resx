@@ -127,8 +127,11 @@
   <data name="NoKey" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\NoKey.reg;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
   </data>
-  <data name="Redundant" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resources\redundant.reg;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  <data name="Redundant_0" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\redundant_0.reg;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="Redundant_1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\redundant_1.reg;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
   </data>
   <data name="SubKey" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\subkey.reg;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
