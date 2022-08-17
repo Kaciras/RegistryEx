@@ -225,7 +225,7 @@ public class RegDocument
 	public static RegDocument ParseFile(string file)
 	{
 		var document = new RegDocument();
-		document.Load(File.ReadAllText(file));
+		document.LoadFile(file);
 		return document;
 	}
 

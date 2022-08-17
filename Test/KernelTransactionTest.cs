@@ -63,4 +63,28 @@ public class KernelTransactionTest
 		}
 		Assert.AreEqual(0x123, RegistryHelper.GetValue(@"HKCU\_RH_Test_\Dword"));
 	}
+
+	[ExpectedException(typeof(IOException))]
+	[TestMethod]
+	public void DeleteKeyWithoutTransaction()
+	{
+		using var transaction = new KernelTransaction();
+		using var key = Registry.CurrentUser.CreateSubKey("_RH_Test_", transaction);
+
+		Registry.CurrentUser.DeleteSubKey("_RH_Test_");
+		key.CreateSubKey("Sub", transaction);
+	}
+
+	[TestMethod]
+	public void AbortOnNonTransactionOperation()
+	{
+		using var transaction = new KernelTransaction();
+		Registry.CurrentUser.DeleteSubKey("_RH_Test_", transaction);
+
+		using var key = Registry.CurrentUser.CreateSubKey("_RH_Test_", true);
+		key.SetValue("foobar", 11);
+
+		Assert.ThrowsException<InvalidOperationException>(transaction.Commit);
+		Assert.IsTrue(Registry.CurrentUser.ContainsSubKey("_RH_Test_"));
+	}
 }

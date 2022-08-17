@@ -149,10 +149,16 @@ internal static class Interop
 			case 32:
 				// ERROR_SHARING_VIOLATION
 				throw new IOException("The file is being used.");
+			case 1018:
+				// ERROR_KEY_DELETED
+				throw new IOException("The key has been marked for deletion.");
 			case 1314:
 				// ERROR_PRIVILEGE_NOT_HELD 
 				throw new UnauthorizedAccessException("Process does not have necessary " +
 					"privilege, you can use RegistryHelper.AddTokenPrivileges to add them");
+			case 6704:
+				// ERROR_TRANSACTION_ALREADY_ABORTED
+				throw new InvalidOperationException("Transaction has already been aborted.");
 			default:
 				throw new Win32Exception($"Win32 API failed, code: {code}");
 		}
