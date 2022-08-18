@@ -2,6 +2,7 @@
 using System.IO;
 using System.Security.AccessControl;
 using Microsoft.Win32;
+using Microsoft.Win32.SafeHandles;
 
 namespace RegistryEx;
 
@@ -331,6 +332,25 @@ public static class RegistryKeyExtension
 		{
 			throw new ArgumentException("The specified subkey is not exists.");
 		}
+	}
+
+	/// <summary>
+	///		Notifies the caller about changes to the attributes or contents of a specified registry key.
+	///		This function does not return until a change has occurred.
+	///	<br/>
+	///		This function cannot be used to detect changes that result from using the RestoreHive(). 
+	/// </summary>
+	/// <param name="filter">
+	///		A value that indicates the changes that should be reported.
+	///	</param>
+	/// <param name="subTree">
+	///		If this parameter is True, the function reports changes in the specified key and its subkeys.
+	///		If the parameter is False, the function reports changes only in the specified key.
+	/// </param>
+	public static void WaitForChange(this RegistryKey key, RegNotifyFilter filter, bool subTree)
+	{
+		var invalid = new SafeWaitHandle(IntPtr.Zero, false);
+		Interop.Check(Interop.RegNotifyChangeKeyValue(key.Handle, subTree, filter, invalid, false));
 	}
 
 	/// <summary>

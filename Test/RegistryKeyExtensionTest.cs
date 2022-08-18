@@ -1,12 +1,14 @@
 ﻿using System.Security.Principal;
 using System.Transactions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json.Linq;
+
 namespace RegistryEx.Test;
 
 [TestClass]
 public sealed class RegistryKeyExtensionTest
 {
-	readonly RegistryKey HKCU = Registry.CurrentUser;
+	static readonly RegistryKey HKCU = Registry.CurrentUser;
 
 	[TestInitialize]
 	public void Setup()
@@ -246,6 +248,28 @@ public sealed class RegistryKeyExtensionTest
 	{
 		using var transaction = new KernelTransaction();
 		HKCU.DeleteSubKeyTree("_NOE_", transaction, false);
+	}
+
+	[Timeout(1000)]
+	[TestMethod]
+	public void WaitForChange()
+	{
+		var DelaySet = (int value) => Task.Run(async () =>
+		{
+			using var key = HKCU.CreateSubKey("_RH_Test_");
+			await Task.Delay(100);
+			key.SetValue("Dword", value);
+		});
+
+		using var key = HKCU.CreateSubKey("_RH_Test_");
+
+		DelaySet(0x7777);
+		key.WaitForChange(RegNotifyFilter.LAST_SET, false);
+		Assert.AreEqual(0x7777, key.GetValue("Dword"));
+
+		DelaySet(0x8888);
+		key.WaitForChange(RegNotifyFilter.LAST_SET, false);
+		Assert.AreEqual(0x8888, key.GetValue("Dword"));
 	}
 
 	[TestMethod]

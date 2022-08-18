@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
-using System.Text;
 using Microsoft.Win32.SafeHandles;
 
 namespace RegistryEx;
@@ -65,6 +63,14 @@ internal static class Interop
 		KernelTransaction hTransaction,
 		IntPtr pExtendedParemeter
 	);
+
+	[DllImport("advapi32.dll")]
+	public static extern int RegNotifyChangeKeyValue(
+		SafeRegistryHandle hKey,
+		bool bWatchSubtree,
+		RegNotifyFilter filter,
+		SafeWaitHandle hEvent,
+		bool fAsynchronous);
 
 	[DllImport("advapi32.dll")]
 	public static extern int RegRestoreKey(SafeRegistryHandle hKey, string lpFile, uint flags);
@@ -133,6 +139,7 @@ internal static class Interop
 	const int ERROR_ACCESS_DENIED = 5;
 	const int ERROR_INVALID_HANDLE = 6;
 	const int ERROR_SHARING_VIOLATION = 32;
+	const int ERROR_INVALID_PARAMETER = 87;
 	const int ERROR_KEY_DELETED = 1018;
 	const int ERROR_PRIVILEGE_NOT_HELD = 1314;
 	const int ERROR_TRANSACTION_ALREADY_ABORTED = 6704;
@@ -158,6 +165,8 @@ internal static class Interop
 				throw new Win32Exception("Invalid handle");
 			case ERROR_SHARING_VIOLATION:
 				throw new IOException("The file is being used.");
+			case ERROR_INVALID_PARAMETER:
+				throw new ArgumentException();
 			case ERROR_PRIVILEGE_NOT_HELD:
 				throw new UnauthorizedAccessException("Process does not have necessary " +
 					"privilege, you can use RegistryHelper.AddTokenPrivileges to add them");
