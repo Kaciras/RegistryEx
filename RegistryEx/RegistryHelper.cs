@@ -92,6 +92,9 @@ public static class RegistryHelper
 		return slash == -1 ? basekey.Name : $@"{basekey.Name}\{name.Substring(slash + 1)}";
 	}
 
+	/// <summary>
+	/// Check if the descendant is a subkey of the ancestor, or equals to ancestor.
+	/// </summary>
 	public static bool IsSubKey(string ancestor, string descendant)
 	{
 		if (!descendant.StartsWith(ancestor, StringComparison.OrdinalIgnoreCase))

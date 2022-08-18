@@ -325,7 +325,6 @@ public static class RegistryKeyExtension
 			{
 				opened.DeleteSubKeyTree(name, transaction, true);
 			}
-
 			key.DeleteSubKey(subkey, transaction, true);
 		}
 		else if (throwOnMissing)

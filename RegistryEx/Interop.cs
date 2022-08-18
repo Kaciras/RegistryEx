@@ -32,8 +32,8 @@ internal static class Interop
 
 	[DllImport("advapi32.dll")]
 	public static extern int RegCreateKeyTransacted(
-		SafeRegistryHandle hKey, 
-		string lpSubKey, 
+		SafeRegistryHandle hKey,
+		string lpSubKey,
 		int reserved,
 		string? lpClass,
 		int dwOptions,
@@ -74,7 +74,7 @@ internal static class Interop
 
 	[DllImport("advapi32.dll")]
 	public static extern int RegUnLoadKey(SafeRegistryHandle hKey, string lpSubKey);
-	
+
 	[DllImport("advapi32.dll")]
 	public static extern int RegLoadAppKey(string file,
 		out SafeRegistryHandle hkResult, RegistryRights sam, bool dwOptions, int Reserved);
@@ -129,6 +129,14 @@ internal static class Interop
 		}
 	}
 
+	const int ERROR_SUCCESS = 0;
+	const int ERROR_ACCESS_DENIED = 5;
+	const int ERROR_INVALID_HANDLE = 6;
+	const int ERROR_SHARING_VIOLATION = 32;
+	const int ERROR_KEY_DELETED = 1018;
+	const int ERROR_PRIVILEGE_NOT_HELD = 1314;
+	const int ERROR_TRANSACTION_ALREADY_ABORTED = 6704;
+
 	/// <summary>
 	/// https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes
 	/// https://github.com/dotnet/runtime/blob/main/src/libraries/Common/src/Interop/Windows/Interop.Errors.cs
@@ -138,27 +146,21 @@ internal static class Interop
 	{
 		switch (code)
 		{
-			case 0:
-				return; // ERROR_SUCCESS
-			case 5:
-				// ERROR_ACCESS_DENIED 
-				throw new UnauthorizedAccessException();
-			case 6:
-				// ERROR_INVALID_HANDLE 
-				throw new Win32Exception("Invalid handle");
-			case 32:
-				// ERROR_SHARING_VIOLATION
-				throw new IOException("The file is being used.");
-			case 1018:
-				// ERROR_KEY_DELETED
+			case ERROR_SUCCESS:
+				return;
+			case ERROR_TRANSACTION_ALREADY_ABORTED:
+				throw new InvalidOperationException("Transaction has already been aborted.");
+			case ERROR_KEY_DELETED:
 				throw new IOException("The key has been marked for deletion.");
-			case 1314:
-				// ERROR_PRIVILEGE_NOT_HELD 
+			case ERROR_ACCESS_DENIED:
+				throw new UnauthorizedAccessException();
+			case ERROR_INVALID_HANDLE:
+				throw new Win32Exception("Invalid handle");
+			case ERROR_SHARING_VIOLATION:
+				throw new IOException("The file is being used.");
+			case ERROR_PRIVILEGE_NOT_HELD:
 				throw new UnauthorizedAccessException("Process does not have necessary " +
 					"privilege, you can use RegistryHelper.AddTokenPrivileges to add them");
-			case 6704:
-				// ERROR_TRANSACTION_ALREADY_ABORTED
-				throw new InvalidOperationException("Transaction has already been aborted.");
 			default:
 				throw new Win32Exception($"Win32 API failed, code: {code}");
 		}

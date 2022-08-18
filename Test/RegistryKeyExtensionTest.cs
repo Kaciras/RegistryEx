@@ -161,7 +161,7 @@ public sealed class RegistryKeyExtensionTest
 		using var transaction = new KernelTransaction();
 		using var key = HKCU.OpenSubKey("_RH_Test_", transaction, true);
 
-		key.DeleteValue("Dword");
+		key!.DeleteValue("Dword");
 		Assert.AreEqual(0x123, RegistryHelper.GetValue(@"HKCU\_RH_Test_\Dword"));
 
 		transaction.Commit();
@@ -174,7 +174,14 @@ public sealed class RegistryKeyExtensionTest
 	{
 		using var transaction = new KernelTransaction();
 		using var key = HKCU.OpenSubKey("_RH_Test_", transaction);
-		key.SetValue("Dword", 0x456);
+		key!.SetValue("Dword", 0x456);
+	}
+
+	[TestMethod]
+	public void OpenSubKeyTransactedNonExists()
+	{
+		using var transaction = new KernelTransaction();
+		Assert.IsNull(HKCU.OpenSubKey("_NOE_", transaction));
 	}
 
 	[TestMethod]
@@ -231,7 +238,7 @@ public sealed class RegistryKeyExtensionTest
 	public void DeleteSubKeyTreeTransactedThrowOnMissing()
 	{
 		using var transaction = new KernelTransaction();
-		HKCU.DeleteSubKeyTree("_NOE_");
+		HKCU.DeleteSubKeyTree("_NOE_", transaction);
 	}
 
 	[TestMethod]

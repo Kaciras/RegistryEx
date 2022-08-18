@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Xml.Linq;
 using Microsoft.Win32;
 
 namespace RegistryEx;
@@ -19,22 +17,23 @@ public class RegDocument
 
 	public Dictionary<string, ValueDict> Created { get; } = new(StringComparer.OrdinalIgnoreCase);
 
+	/// <summary>
+	/// Add a delete key entry, and remove create key entries
+	/// which are subkey of the deleted.
+	/// </summary>
+	/// <param name="name">The name of the key to delete</param>
 	public void DeleteKey(string name)
 	{
 		Erased.Add(name);
-
-		var removed = new List<string>();
-		foreach (var existing in Created.Keys)
-		{
-			if (RegistryHelper.IsSubKey(name, existing))
-			{
-				removed.Add(existing);
-			}
-		}
-
-		removed.ForEach(v => Created.Remove(v));
+		Created.Keys
+			.Where(e => RegistryHelper.IsSubKey(name, e))
+			.ToList().ForEach(v => Created.Remove(v));
 	}
 
+	/// <summary>
+	/// Get the value dictionary of the create key entry, or add one if it not exists.
+	/// </summary>
+	/// <param name="name">The key name</param>
 	public ValueDict CreateKey(string name)
 	{
 		if (Created.TryGetValue(name, out var existing))
@@ -43,7 +42,6 @@ public class RegDocument
 		}
 		return Created[name] = new(StringComparer.OrdinalIgnoreCase);
 	}
-
 
 	/// <summary>
 	/// Remove redundant key entries that not affect execution result.
@@ -57,49 +55,35 @@ public class RegDocument
 	/// </summary>
 	public void Compact()
 	{
-		var removed = new List<string>();
-		foreach (var des in Erased)
+		static bool SubNotSame(string anc, string des)
 		{
-			foreach (var anc in Erased)
-			{
-				if (RegistryHelper.IsSubKey(anc, des) && !ReferenceEquals(anc,des))
-				{
-					removed.Add(des);
-					break;
-				}
-			}
+			return anc.Length != des.Length && RegistryHelper.IsSubKey(anc, des);
 		}
-		removed.ForEach(v => Erased.Remove(v));
 
-		removed.Clear();
-		foreach (var (anc, dict) in Created)
-		{
-			if (dict.Count > 0)
-			{
-				continue;
-			}
-			foreach (var des in Created.Keys)
-			{
-				
-				if (RegistryHelper.IsSubKey(anc, des) && !ReferenceEquals(anc, des))
-				{
-					removed.Add(anc);
-					break;
-				}
-			}
-		}
-		removed.ForEach(v => Created.Remove(v));
+		Erased
+			.Where(des => Erased.Any(anc => SubNotSame(anc, des)))
+			.ToList().ForEach(v => Erased.Remove(v));
+
+		Created
+			.Where(pair => pair.Value.Count == 0)
+			.Select(pair => pair.Key)
+			.Where(anc => Created.Keys.Any(des => SubNotSame(anc, des)))
+			.ToList().ForEach(v => Created.Remove(v));
 	}
 
+	/// <summary>
+	/// Load entries from a .reg file.
+	/// </summary>
+	/// <param name="path">The file path</param>
 	public void LoadFile(string path)
 	{
 		Load(File.ReadAllText(path, Encoding.Unicode));
 	}
 
 	/// <summary>
-	/// 
+	/// Load entries from .reg file content.
 	/// </summary>
-	/// <param name="content"></param>
+	/// <param name="content">The content of the .reg file</param>
 	public void Load(string content)
 	{
 		var reader = new RegFileReader(content);
@@ -125,6 +109,9 @@ public class RegDocument
 		}
 	}
 
+	/// <summary>
+	/// Load entries from Registry, like export in regedit.exe.
+	/// </summary>
 	public void Load(RegistryKey key)
 	{
 		foreach (var name in key.GetSubKeyNames())
@@ -141,9 +128,21 @@ public class RegDocument
 	}
 
 	/// <summary>
-	/// Merge a RegDocument object to this. after the call this document will 
+	/// Merge a RegDocument object to this. If entries have same name,
+	/// the entry in the other will overwrite the one in this.
+	/// <code>
+	/// RegDocument a = RegDocument.ParseFile(...);
+	/// RegDocument b = RegDocument.ParseFile(...);
+	/// 
+	/// // merge then execute
+	/// a.Load(b);
+	/// a.Execute();
+	/// 
+	/// // is equivalent to
+	/// a.Execute();
+	/// b.Execute();
+	/// </code>
 	/// </summary>
-	/// <param name="other"></param>
 	public void Load(RegDocument other)
 	{
 		foreach (var item in other.Erased)
@@ -157,10 +156,10 @@ public class RegDocument
 	}
 
 	/// <summary>
-	/// Add directives reverse to the other, these directives will restore keys and 
-	/// values affected by the other to their current state.
+	/// Add entries reverse to the other, these entries will restore keys and 
+	/// values affected by the other to their current state in Registry.
+
 	/// </summary>
-	/// <param name="other"></param>
 	public void Revert(RegDocument other)
 	{
 		foreach (var name in other.Erased)
@@ -206,6 +205,7 @@ public class RegDocument
 
 	/// <summary>
 	/// If is true, the information stored in the document is already in Registry,
+	/// call Execute() has no effect.
 	/// </summary>
 	public bool IsSuitable
 	{
@@ -249,7 +249,7 @@ public class RegDocument
 	}
 
 	/// <summary>
-	/// Execute directives in the document, this method is equivalent to command `regedit /s`.
+	/// Execute directives in the document, equivalent to command `regedit /s`.
 	/// </summary>
 	public void Execute()
 	{
@@ -281,6 +281,9 @@ public class RegDocument
 		return document;
 	}
 
+	/// <summary>
+	/// Serialize the document in .reg file format.
+	/// </summary>
 	public void WriteTo(Stream outputStream)
 	{
 		using var writer = new RegFileWriter(outputStream);
