@@ -1,7 +1,4 @@
 ﻿using System.Security.Principal;
-using System.Transactions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json.Linq;
 
 namespace RegistryEx.Test;
 
@@ -60,87 +57,6 @@ public sealed class RegistryKeyExtensionTest
 	public void ContainsSubKey(string keyName, bool expected)
 	{
 		Assert.AreEqual(expected, HKCU.ContainsSubKey(keyName));
-	}
-
-	[TestMethod]
-	public void GetValueKind()
-	{
-		var actual = HKCU.GetValueKind("_RH_Test_", "Expand");
-		Assert.AreEqual(RegistryValueKind.ExpandString, actual);
-	}
-
-	[ExpectedException(typeof(IOException))]
-	[TestMethod]
-	public void GetValueKindNonExistKey()
-	{
-		HKCU.GetValueKind("__NOE__", "Path");
-	}
-
-	[ExpectedException(typeof(IOException))]
-	[TestMethod]
-	public void GetValueKindNonExists()
-	{
-		HKCU.GetValueKind("_RH_Test_", "__NOE__");
-	}
-
-	[ExpectedException(typeof(InvalidCastException))]
-	[TestMethod]
-	public void GetValueWithInvalidType()
-	{
-		HKCU.GetValue<int>("_RH_Test_", string.Empty);
-	}
-
-	[TestMethod]
-	public void GetNonExistsValue()
-	{
-		Assert.AreEqual(0, HKCU.GetValue<int>("_RH_Test_", "__NOE__"));
-	}
-
-	[TestMethod]
-	public void GetValueFromNonExistKey()
-	{
-		Assert.AreEqual(0, HKCU.GetValue<int>("__NOE__", string.Empty));
-	}
-
-	[TestMethod]
-	public void GetValue()
-	{
-		Assert.AreEqual(0x123, HKCU.GetValue<int>("_RH_Test_", "Dword"));
-	}
-
-	[TestMethod]
-	public void DeleteNonExistValue()
-	{
-		HKCU.DeleteValue("_RH_Test_", "__NOE__");
-	}
-
-	[TestMethod]
-	public void DeleteValueOnNonExistKey()
-	{
-		HKCU.DeleteValue("__NOE__", "Dword");
-	}
-
-	[TestMethod]
-	public void DeleteValue()
-	{
-		HKCU.DeleteValue("_RH_Test_", "Dword");
-
-		Assert.IsNull(HKCU.GetValue("Dword"));
-		Assert.IsTrue(HKCU.ContainsSubKey("_RH_Test_"));
-	}
-
-	[TestMethod]
-	public void SetValueOnNonExistKey()
-	{
-		HKCU.SetValue(@"_RH_Test_\New", "test", 123);
-		Assert.AreEqual(123, Registry.GetValue(@"HKEY_CURRENT_USER\_RH_Test_\New", "test", null));
-	}
-
-	[TestMethod]
-	public void SetValue()
-	{
-		HKCU.SetValue(@"_RH_Test_", "Dword", 8964);
-		Assert.AreEqual(8964, Registry.GetValue(@"HKEY_CURRENT_USER\_RH_Test_", "Dword", 0));
 	}
 
 	[TestMethod]

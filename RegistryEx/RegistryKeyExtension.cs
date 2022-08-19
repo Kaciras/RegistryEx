@@ -51,53 +51,6 @@ public static class RegistryKeyExtension
 		return subKey != null;
 	}
 
-	public static RegistryValueKind GetValueKind(
-		this RegistryKey key,
-		string path,
-		string name)
-	{
-		var subKey = key.OpenSubKey(path);
-		if (subKey != null)
-		{
-			return subKey.GetValueKind(name);
-		}
-		throw new IOException("The specified registry key doesn't exist");
-	}
-
-	//[return: NotNullIfNotNull("defaultValue")]
-	public static T? GetValue<T>(
-		this RegistryKey key,
-		string path,
-		string name,
-		T? defaultValue = default)
-	{
-		using var subKey = key.OpenSubKey(path);
-		if (subKey == null)
-		{
-			return defaultValue;
-		}
-		return (T?)subKey.GetValue(name, defaultValue);
-	}
-
-	public static void DeleteValue(
-		this RegistryKey key,
-		string path,
-		string name)
-	{
-		using var subKey = key.OpenSubKey(path, true);
-		subKey?.DeleteValue(name, false);
-	}
-
-	public static void SetValue(
-		this RegistryKey key,
-		string path,
-		string name,
-		object value)
-	{
-		using var subKey = key.CreateSubKey(path, true);
-		subKey.SetValue(name, value);
-	}
-
 	/// <summary>
 	///		Copies the specified registry key, along with its values, access rules, and subkeys, 
 	///		to the specified destination key.
