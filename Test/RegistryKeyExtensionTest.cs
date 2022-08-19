@@ -1,4 +1,5 @@
 ﻿using System.Security.Principal;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace RegistryEx.Test;
 
@@ -17,6 +18,7 @@ public sealed class RegistryKeyExtensionTest
 	public void Cleanup()
 	{
 		HKCU.DeleteSubKeyTree("_RH_Test_", false);
+		HKCU.DeleteSubKeyTree("_Renamed_", false);
 	}
 
 	[TestMethod]
@@ -57,6 +59,35 @@ public sealed class RegistryKeyExtensionTest
 	public void ContainsSubKey(string keyName, bool expected)
 	{
 		Assert.AreEqual(expected, HKCU.ContainsSubKey(keyName));
+	}
+
+	[ExpectedException(typeof(UnauthorizedAccessException))]
+	[TestMethod]
+	public void RenameWithoutPermission()
+	{
+		using var key = HKCU.OpenSubKey("_RH_Test_")!;
+		key.Rename("_Renamed_");
+	}
+
+	[TestMethod]
+	public void Rename()
+	{
+		using var _ = TestFixture.Import("SubKey");
+		HKCU.Rename("_RH_Test_", "_Renamed_");
+		using var key = HKCU.OpenSubKey(@"_Renamed_\Sub");
+
+		Assert.IsFalse(HKCU.ContainsSubKey("_RH_Test_"));
+		Assert.AreEqual(0x44, key!.GetValue(""));
+	}
+
+	[TestMethod]
+	public void RenameCurrent()
+	{
+		using var key = HKCU.OpenSubKey("_RH_Test_", true)!;
+		key.Rename("_Renamed_");
+
+		Assert.IsFalse(HKCU.ContainsSubKey("_RH_Test_"));
+		Assert.AreEqual("文字文字", key!.GetValue(""));
 	}
 
 	[TestMethod]

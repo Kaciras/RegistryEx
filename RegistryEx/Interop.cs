@@ -70,7 +70,15 @@ internal static class Interop
 		bool bWatchSubtree,
 		RegNotifyFilter filter,
 		SafeWaitHandle hEvent,
-		bool fAsynchronous);
+		bool fAsynchronous
+	);
+
+	[DllImport("advapi32.dll")]
+	public static extern int RegRenameKey(
+		SafeRegistryHandle hKey,
+		[MarshalAs(UnmanagedType.LPWStr)] string? lpSubKeyName,
+		[MarshalAs(UnmanagedType.LPWStr)] string lpNewKeyName
+	);
 
 	[DllImport("advapi32.dll")]
 	public static extern int RegRestoreKey(SafeRegistryHandle hKey, string lpFile, uint flags);
@@ -92,9 +100,6 @@ internal static class Interop
 	static extern bool AdjustTokenPrivileges(
 		IntPtr htok, bool disall, ref TokPriv1Luid newst, int len, IntPtr prev, IntPtr relen
 	);
-
-	[DllImport("kernel32.dll", ExactSpelling = true)]
-	static extern IntPtr GetCurrentProcess();
 
 	[DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
 	static extern bool OpenProcessToken(IntPtr h, int acc, ref IntPtr phtok);

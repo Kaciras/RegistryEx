@@ -52,6 +52,37 @@ public static class RegistryKeyExtension
 	}
 
 	/// <summary>
+	///		Changes the name of the registry key.
+	///		
+	///		The caller must have KEY_CREATE_SUB_KEY access to the parent of the 
+	///		specified key and DELETE access to the entire subtree being renamed.
+	/// </summary>
+	/// <param name="newName">
+	///		The new name of the key. The new name must not already exist.
+	///	</param>
+	public static void Rename(this RegistryKey key, string newName)
+	{
+		Interop.Check(Interop.RegRenameKey(key.Handle, null, newName));
+	}
+
+	/// <summary>
+	///		Changes the name of the specified registry key.
+	///		
+	///		The caller must have KEY_CREATE_SUB_KEY access to the parent of the 
+	///		specified key and DELETE access to the entire subtree being renamed.
+	/// </summary>
+	/// <param name="subkey">
+	///		The name of the subkey to be renamed.
+	///	</param>
+	/// <param name="newName">
+	///		The new name of the key. The new name must not already exist.
+	///	</param>
+	public static void Rename(this RegistryKey key, string subkey, string newName)
+	{
+		Interop.Check(Interop.RegRenameKey(key.Handle, subkey, newName));
+	}
+
+	/// <summary>
 	///		Copies the specified registry key, along with its values, access rules, and subkeys, 
 	///		to the specified destination key.
 	/// </summary>
