@@ -73,7 +73,7 @@ public sealed class RegistryValueTest
 	public void EqualityDefferentType()
 	{
 		var value = new RegistryValue(0, RegistryValueKind.DWord);
-		Assert.AreNotEqual(value, "");
+		Assert.IsFalse(value.Equals(""));
 		Assert.AreNotEqual(value.GetHashCode(), "".GetHashCode());
 	}
 
