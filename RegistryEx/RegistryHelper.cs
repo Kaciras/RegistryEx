@@ -334,6 +334,12 @@ public static class RegistryHelper
 		Interop.RemovePrivilege("SeTakeOwnershipPrivilege");
 	}
 
+	public static KeyElevateSession Elevate(string keyPath)
+	{
+		var (basekey, subKey) = SplitForKey(keyPath);
+		return Elevate(basekey, subKey);
+	}
+
 	/// <summary>
 	/// 为当前用户设置完全控制键的权限，用户至少要有修改权限的权限。
 	/// <br/>
