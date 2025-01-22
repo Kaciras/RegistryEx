@@ -41,8 +41,8 @@ internal static class SharedTools
 			RedirectStandardError = true,
 			CreateNoWindow = true,
 		};
-		var process = Process.Start(startInfo);
 
+		var process = Process.Start(startInfo)!;
 		process.WaitForExit();
 		if (process.ExitCode == 0)
 		{

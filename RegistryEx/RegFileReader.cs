@@ -12,7 +12,7 @@ namespace RegistryEx;
 /// <br/>
 /// 该读取器只返回完整的条目（键或值），其它部分如版本号和注释将被忽略。
 /// </summary>
-public ref struct RegFileReader
+public ref struct RegFileReader(string content)
 {
 	/// <summary>
 	/// 当前读取到的条目是键吗，如果不是则为值。
@@ -29,12 +29,7 @@ public ref struct RegFileReader
 
 	public bool IsDelete { get; private set; } = default;
 
-	RegFileTokenizer tokenizer;
-
-	public RegFileReader(string content)
-	{
-		tokenizer = new RegFileTokenizer(content);
-	}
+	RegFileTokenizer tokenizer = new(content);
 
 	/// <summary>
 	/// 读取下一个键或值，读取到的内容由该对象的各个属性来获取。

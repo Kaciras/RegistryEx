@@ -4,8 +4,8 @@ namespace RegistryEx.Test;
 [TestClass]
 public sealed class RegistryValueTest
 {
-	readonly RegistryValue[] values = new RegistryValue[]
-	{
+	readonly RegistryValue[] values =
+	[
 		RegistryValue.DELETED,
 		new(Array.Empty<byte>(), RegistryValueKind.None),
 		new(Array.Empty<byte>(), RegistryValueKind.Binary),
@@ -17,7 +17,7 @@ public sealed class RegistryValueTest
 		new("", RegistryValueKind.ExpandString),
 		new("", RegistryValueKind.String),
 		new(Array.Empty<string>(), RegistryValueKind.MultiString),
-	};
+	];
 
 	public static IEnumerable<object?[]> InvalidConstructArgs()
 	{

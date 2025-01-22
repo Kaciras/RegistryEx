@@ -27,7 +27,7 @@ public sealed class RegFileWriterTest
 			writer.SetValue("Long", 0xABCDEF987654321L);
 			writer.SetValue("Int", 44846);
 			writer.SetValue("Bytes", new byte[100]);
-			writer.SetValue("Multi", new string[] { "foo", "", "bar" });
+			writer.SetValue("Multi", ["foo", "", "bar"]);
 		}
 		Snapshots.AssertMatchRegFile(stream);
 	}

@@ -5,6 +5,7 @@ namespace RegistryEx;
 /// <summary>
 /// Indicates the changes that should be reported from RegNotifyChangeKeyValue.
 /// </summary>
+/// <see href="https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regnotifychangekeyvalue"/>
 [Flags]
 public enum RegNotifyFilter : uint
 {

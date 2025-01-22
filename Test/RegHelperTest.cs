@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 using System.Security;
 using System.Security.AccessControl;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace RegistryEx.Test;
 
@@ -108,7 +107,7 @@ public sealed class RegHelperTest
 	public void OpenKey(string path, string keyName)
 	{
 		using var key = RegistryHelper.OpenKey(path);
-		Assert.AreEqual(keyName, key?.Name);
+		Assert.AreEqual(keyName, key!.Name);
 	}
 
 	[DataRow(@"HKCU\_RH_Test_", false)]

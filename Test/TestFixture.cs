@@ -6,7 +6,7 @@ namespace RegistryEx.Test;
 
 internal readonly struct TestFixture : IDisposable
 {
-	public static TestFixture Import(string file) => new TestFixture(file);
+	public static TestFixture Import(string file) => new(file);
 
 	private TestFixture(string file)
 	{

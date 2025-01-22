@@ -15,34 +15,24 @@ namespace RegistryEx;
 /// </list>
 /// <seealso cref="https://support.microsoft.com/en-us/help/310516/how-to-add-modify-or-delete-registry-subkeys-and-values-by-using-a-reg"/>
 /// </summary>
-ref struct RegFileTokenizer
+ref struct RegFileTokenizer(string content)
 {
 	/*
 	 * 每个标记加上换行符，用于 IndexOfAny 搜索同时检查是否有换行。
 	 * 因为 switch 只能用于常量，懒得写三个所以只能这样了。
 	 */
-	static readonly char[] KEY_END = { ']', '\r' };
-	static readonly char[] QUOTE = { '"', '\r' };
-	static readonly char[] KIND_END = { ':', '\r' };
+	static readonly char[] KEY_END = [']', '\r'];
+	static readonly char[] QUOTE = ['"', '\r'];
+	static readonly char[] KIND_END = [':', '\r'];
 
-	readonly string content;
+	readonly string content = content;
 
-	int i;
-	bool hasMoreLines;
+	int i = 0;
+	bool hasMoreLines = false;
 
-	public RegTokenType TokenType { get; private set; }
+	public RegTokenType TokenType { get; private set; } = RegTokenType.None;
 
-	public string Value { get; private set; }
-
-	public RegFileTokenizer(string content)
-	{
-		this.content = content;
-
-		Value = string.Empty;
-		i = 0;
-		hasMoreLines = false;
-		TokenType = RegTokenType.None;
-	}
+	public string Value { get; private set; } = string.Empty;
 
 	/// <summary>
 	/// 读取下一个 Token，如果已经读完则返回 false，否则返回 true

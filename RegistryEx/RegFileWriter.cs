@@ -13,7 +13,7 @@ namespace RegistryEx;
 /// <see href="https://docs.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types"/>
 public readonly struct RegFileWriter : IDisposable
 {
-	private static readonly char[] Escape = { '"', '\\' };
+	private static readonly char[] Escape = ['"', '\\'];
 
 	readonly StreamWriter writer;
 

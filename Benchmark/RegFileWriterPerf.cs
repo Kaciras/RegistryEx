@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using Microsoft.Win32;
 
 namespace RegistryEx.Benchmark;
@@ -23,7 +18,7 @@ public class RegFileWriterPerf
 		writer.SetValue("Int", 44846);
 		writer.SetValue("Bytes", new byte[100]);
 		writer.SetValue("None", new byte[100], RegistryValueKind.None);
-		writer.SetValue("Multi", new string[] { "foo", "", "bar" });
+		writer.SetValue("Multi", ["foo", "", "bar"]);
 		return writer;
 	}
 }

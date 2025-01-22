@@ -201,7 +201,7 @@ public sealed class RegistryKeyExtensionTest
 	[TestMethod]
 	public void WaitForChange()
 	{
-		var DelaySet = (int value) => Task.Run(async () =>
+		Task DelaySet(int value) => Task.Run(async () =>
 		{
 			using var key = HKCU.CreateSubKey("_RH_Test_");
 			await Task.Delay(100);
@@ -217,6 +217,13 @@ public sealed class RegistryKeyExtensionTest
 		DelaySet(0x8888);
 		key.WaitForChange(RegNotifyFilter.LAST_SET, false);
 		Assert.AreEqual(0x8888, key.GetValue("Dword"));
+	}
+
+	[ExpectedException(typeof(ArgumentException))]
+	[TestMethod]
+	public void ThreadAgnosticSync()
+	{
+		HKCU.WaitForChange((RegNotifyFilter)0x10000001, false);
 	}
 
 	[TestMethod]
