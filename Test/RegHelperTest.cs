@@ -237,20 +237,6 @@ public sealed class RegHelperTest
 		Assert.IsNull(key!.GetValue(""));
 	}
 
-	[ExpectedException(typeof(DirectoryNotFoundException))]
-	[TestMethod]
-	public void GetCLSIDValueException()
-	{
-		RegistryHelper.GetCLSIDValue("{66666666-0000-0000-6666-000000000000}");
-	}
-
-	[TestMethod]
-	public void GetCLSIDValue()
-	{
-		var value = RegistryHelper.GetCLSIDValue("{C7657C4A-9F68-40fa-A4DF-96BC08EB3551}");
-		Assert.AreEqual("Photo Thumbnail Provider", value);
-	}
-
 	[ExpectedException(typeof(IOException))]
 	[TestMethod]
 	public void LoadAppHiveLocked()

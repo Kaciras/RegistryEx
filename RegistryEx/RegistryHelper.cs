@@ -286,18 +286,6 @@ public static class RegistryHelper
 	}
 
 	/// <summary>
-	/// 从注册表中读取指定 CLSID 项的默认值。
-	/// </summary>
-	/// <param name="clsid">CLSID值，格式{8-4-4-4-12}</param>
-	/// <exception cref="DirectoryNotFoundException">如果CLSID记录不存在</exception>
-	public static string GetCLSIDValue(string clsid)
-	{
-		using var key = Registry.ClassesRoot.OpenSubKey(@"CLSID\" + clsid);
-		return (string?)key?.GetValue(string.Empty)
-			?? throw new DirectoryNotFoundException($"CLSID {clsid} is not registred");
-	}
-
-	/// <summary>
 	///	 Loads the specified registry hive as an application hive.
 	/// <br/>
 	///		Unlike RegLoadKey, RegLoadAppKey does not load the hive under HKEY_LOCAL_MACHINE or HKEY_USERS.
@@ -336,6 +324,9 @@ public static class RegistryHelper
 		Interop.AddPrivilege("SeRestorePrivilege");
 	}
 
+	/// <summary>
+	/// Remove token privilieges added by AddTokenPrivileges().
+	/// </summary>
 	public static void RemoveTokenPrivileges()
 	{
 		Interop.RemovePrivilege("SeRestorePrivilege");
@@ -357,7 +348,7 @@ public static class RegistryHelper
 	/// <see cref="https://stackoverflow.com/a/6491052"/>
 	public static KeyElevateSession Elevate(RegistryKey baseKey, string name)
 	{
-		var user = WindowsIdentity.GetCurrent().User;
+		var user = WindowsIdentity.GetCurrent().User!;
 		var rule = new RegistryAccessRule(user, RegistryRights.FullControl, AccessControlType.Allow);
 		return new KeyElevateSession(baseKey, name, rule);
 	}
